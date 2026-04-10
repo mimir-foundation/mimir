@@ -1,0 +1,719 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getStats,
+  getHarnessConfig,
+  getHarnessHealth,
+  applyPreset,
+  getAgentActivity,
+  generateBrief,
+  triggerDeepScan,
+  triggerTaxonomyRebuild,
+  getInterests,
+  getBridgeStatus,
+  getBridgeConfig,
+  updateBridgeConfig,
+  testBridge,
+  getBridgeLog,
+} from "../lib/api";
+import type { BridgeConfig, BridgeLogEntry, BridgeStatus } from "../lib/api";
+import {
+  Activity,
+  CheckCircle,
+  XCircle,
+  Cpu,
+  Loader2,
+  Brain,
+  Newspaper,
+  Search,
+  GitBranch,
+  Clock,
+  MessageSquare,
+  Send,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+
+export default function Settings() {
+  const queryClient = useQueryClient();
+  const [applying, setApplying] = useState("");
+  const [running, setRunning] = useState("");
+
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: getStats,
+  });
+
+  const { data: config } = useQuery({
+    queryKey: ["harness-config"],
+    queryFn: getHarnessConfig,
+  });
+
+  const { data: health } = useQuery({
+    queryKey: ["harness-health"],
+    queryFn: getHarnessHealth,
+  });
+
+  const { data: activityData } = useQuery({
+    queryKey: ["agent-activity"],
+    queryFn: () => getAgentActivity(15),
+    refetchInterval: 15_000,
+  });
+
+  const { data: interests } = useQuery({
+    queryKey: ["interests"],
+    queryFn: getInterests,
+  });
+
+  const { data: bridgeStatus } = useQuery({
+    queryKey: ["bridge-status"],
+    queryFn: async () => {
+      try { return await getBridgeStatus(); }
+      catch { return { configured: false, platforms: {} } as BridgeStatus; }
+    },
+    refetchInterval: 15_000,
+  });
+
+  const { data: bridgeConfig } = useQuery({
+    queryKey: ["bridge-config"],
+    queryFn: async () => {
+      try { return await getBridgeConfig(); }
+      catch { return {} as BridgeConfig; }
+    },
+  });
+
+  const { data: bridgeLog } = useQuery({
+    queryKey: ["bridge-log"],
+    queryFn: async () => {
+      try { return await getBridgeLog(20); }
+      catch { return [] as BridgeLogEntry[]; }
+    },
+    refetchInterval: 15_000,
+  });
+
+  async function handleApplyPreset(preset: string) {
+    setApplying(preset);
+    try {
+      await applyPreset(preset);
+      queryClient.invalidateQueries({ queryKey: ["harness-config"] });
+      queryClient.invalidateQueries({ queryKey: ["harness-health"] });
+    } finally {
+      setApplying("");
+    }
+  }
+
+  async function handleAction(action: string, fn: () => Promise<unknown>) {
+    setRunning(action);
+    try {
+      await fn();
+      queryClient.invalidateQueries({ queryKey: ["agent-activity"] });
+    } finally {
+      setRunning("");
+    }
+  }
+
+  // Bridge state
+  const [bridgeEditing, setBridgeEditing] = useState(false);
+  const [bridgeDraft, setBridgeDraft] = useState<BridgeConfig>({});
+  const [bridgeTesting, setBridgeTesting] = useState("");
+  const [bridgeTestResult, setBridgeTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
+  const [showTokens, setShowTokens] = useState<Record<string, boolean>>({});
+  const [showBridgeLog, setShowBridgeLog] = useState(false);
+
+  function startEditBridge() {
+    setBridgeDraft(bridgeConfig || {});
+    setBridgeEditing(true);
+  }
+
+  async function saveBridgeConfig() {
+    try {
+      await updateBridgeConfig(bridgeDraft);
+      queryClient.invalidateQueries({ queryKey: ["bridge-config"] });
+      queryClient.invalidateQueries({ queryKey: ["bridge-status"] });
+      setBridgeEditing(false);
+    } catch {
+      // keep editing on error
+    }
+  }
+
+  async function handleTestBridge(platform: string) {
+    setBridgeTesting(platform);
+    setBridgeTestResult((prev) => ({ ...prev, [platform]: { ok: false, msg: "..." } }));
+    try {
+      const res = await testBridge(platform);
+      setBridgeTestResult((prev) => ({
+        ...prev,
+        [platform]: { ok: res.success, msg: res.success ? "Connected!" : res.error || "Failed" },
+      }));
+    } catch (e: unknown) {
+      setBridgeTestResult((prev) => ({
+        ...prev,
+        [platform]: { ok: false, msg: e instanceof Error ? e.message : "Failed" },
+      }));
+    } finally {
+      setBridgeTesting("");
+    }
+  }
+
+  const presets = [
+    { name: "local", desc: "All local via Ollama (free, private)" },
+    { name: "hybrid", desc: "Local embeddings + cloud reasoning" },
+    { name: "cloud", desc: "All cloud APIs (best quality)" },
+    { name: "budget", desc: "Local + cheap cloud model" },
+  ];
+
+  const statusColors: Record<string, string> = {
+    complete: "text-emerald-400",
+    running: "text-blue-400",
+    error: "text-red-400",
+  };
+
+  return (
+    <div className="max-w-3xl space-y-8">
+      <h1 className="text-2xl font-bold text-white">Settings</h1>
+
+      {/* System Status */}
+      {stats && (
+        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+          <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4" /> System Status
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Total Notes</span>
+              <p className="text-xl font-bold text-white">{stats.notes}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Concepts</span>
+              <p className="text-xl font-bold text-white">{stats.concepts}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Connections</span>
+              <p className="text-xl font-bold text-white">{stats.connections}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Entities</span>
+              <p className="text-xl font-bold text-white">{stats.entities}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Agent Controls */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+          <Brain className="w-4 h-4" /> Agent Controls
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            onClick={() => handleAction("brief", generateBrief)}
+            disabled={!!running}
+            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+          >
+            {running === "brief" ? (
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+            ) : (
+              <Newspaper className="w-4 h-4 text-gray-500" />
+            )}
+            <div className="text-left">
+              <span className="text-sm text-white">Generate Brief</span>
+              <p className="text-xs text-gray-500">Daily digest now</p>
+            </div>
+          </button>
+          <button
+            onClick={() => handleAction("scan", triggerDeepScan)}
+            disabled={!!running}
+            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+          >
+            {running === "scan" ? (
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+            ) : (
+              <Search className="w-4 h-4 text-gray-500" />
+            )}
+            <div className="text-left">
+              <span className="text-sm text-white">Deep Scan</span>
+              <p className="text-xs text-gray-500">Find connections</p>
+            </div>
+          </button>
+          <button
+            onClick={() => handleAction("taxonomy", triggerTaxonomyRebuild)}
+            disabled={!!running}
+            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+          >
+            {running === "taxonomy" ? (
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+            ) : (
+              <GitBranch className="w-4 h-4 text-gray-500" />
+            )}
+            <div className="text-left">
+              <span className="text-sm text-white">Rebuild Taxonomy</span>
+              <p className="text-xs text-gray-500">Merge & organize</p>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      {/* Interest Signals */}
+      {interests?.interests && interests.interests.length > 0 && (
+        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+          <h2 className="text-sm font-medium text-gray-400 mb-3">
+            Current Interests (decayed)
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {interests.interests.slice(0, 15).map((i) => (
+              <span
+                key={i.topic}
+                className="px-2 py-1 bg-gray-800 text-gray-300 rounded text-xs"
+                style={{ opacity: Math.min(1, 0.3 + i.score * 0.7) }}
+              >
+                {i.topic}{" "}
+                <span className="text-gray-600">{i.score.toFixed(1)}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* AI Engine Config */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+          <Cpu className="w-4 h-4" /> AI Engine
+        </h2>
+
+        <div className="mb-6">
+          <h3 className="text-xs text-gray-500 mb-2">Presets</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.name}
+                onClick={() => handleApplyPreset(p.name)}
+                disabled={!!applying}
+                className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg text-left hover:border-indigo-500 transition-colors"
+              >
+                {applying === p.name ? (
+                  <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                ) : (
+                  <Cpu className="w-4 h-4 text-gray-500" />
+                )}
+                <div>
+                  <span className="text-sm text-white capitalize">
+                    {p.name}
+                  </span>
+                  <p className="text-xs text-gray-500">{p.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {config && (
+          <div>
+            <h3 className="text-xs text-gray-500 mb-2">
+              Current Configuration
+            </h3>
+            <div className="space-y-2">
+              {Object.entries(config).map(([op, cfg]) => (
+                <div
+                  key={op}
+                  className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
+                >
+                  <span className="text-sm text-gray-300 capitalize">{op}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500">
+                      {cfg.provider}
+                    </span>
+                    <span className="text-xs text-indigo-400">{cfg.model}</span>
+                    {health?.status &&
+                      (health.status[op] ? (
+                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-400" />
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Agent Activity Log */}
+      {activityData?.log && activityData.log.length > 0 && (
+        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+          <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+            <Clock className="w-4 h-4" /> Agent Activity
+          </h2>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {activityData.log.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2 text-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <span className={statusColors[entry.status] || "text-gray-400"}>
+                    {entry.status === "running" ? "●" : entry.status === "complete" ? "✓" : "✗"}
+                  </span>
+                  <span className="text-gray-300">
+                    {entry.action_type.replace("_", " ")}
+                  </span>
+                  {entry.error_message && (
+                    <span className="text-red-400 truncate max-w-48">
+                      {entry.error_message}
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-600 shrink-0">
+                  {formatDistanceToNow(new Date(entry.started_at), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Messaging Bridge */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+          <MessageSquare className="w-4 h-4" /> Messaging Bridge
+        </h2>
+
+        {/* Platform status indicators */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+          {["telegram", "mattermost"].map((p) => {
+            const plat = bridgeStatus?.platforms?.[p];
+            const connected = plat?.connected;
+            const configured = !!plat;
+            return (
+              <div
+                key={p}
+                className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white capitalize">{p}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!bridgeStatus?.configured || !configured ? (
+                    <span className="text-xs text-gray-500">Not configured</span>
+                  ) : connected ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs text-emerald-400">Connected</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4 text-red-400" />
+                      <span className="text-xs text-red-400">Disconnected</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Configuration */}
+        {!bridgeEditing ? (
+          <div>
+            <h3 className="text-xs text-gray-500 mb-2">Configuration</h3>
+            <div className="space-y-2 mb-4">
+              {bridgeConfig?.telegram?.bot_token && (
+                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-300">Telegram Bot Token</span>
+                  <span className="text-xs text-gray-500">{bridgeConfig.telegram.bot_token}</span>
+                </div>
+              )}
+              {bridgeConfig?.telegram?.user_id && (
+                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-300">Telegram User ID</span>
+                  <span className="text-xs text-indigo-400">{bridgeConfig.telegram.user_id}</span>
+                </div>
+              )}
+              {bridgeConfig?.mattermost?.url && (
+                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-300">Mattermost URL</span>
+                  <span className="text-xs text-indigo-400">{bridgeConfig.mattermost.url}</span>
+                </div>
+              )}
+              {bridgeConfig?.mattermost?.bot_token && (
+                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-300">Mattermost Bot Token</span>
+                  <span className="text-xs text-gray-500">{bridgeConfig.mattermost.bot_token}</span>
+                </div>
+              )}
+              {!bridgeConfig?.telegram?.bot_token && !bridgeConfig?.mattermost?.url && (
+                <p className="text-xs text-gray-500">
+                  No platforms configured. Set tokens via environment variables or click Edit to configure.
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={startEditBridge}
+                className="px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors"
+              >
+                Edit Configuration
+              </button>
+              {bridgeStatus?.platforms?.telegram && (
+                <button
+                  onClick={() => handleTestBridge("telegram")}
+                  disabled={!!bridgeTesting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors disabled:opacity-50"
+                >
+                  {bridgeTesting === "telegram" ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3" />
+                  )}
+                  Test Telegram
+                </button>
+              )}
+              {bridgeStatus?.platforms?.mattermost && (
+                <button
+                  onClick={() => handleTestBridge("mattermost")}
+                  disabled={!!bridgeTesting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors disabled:opacity-50"
+                >
+                  {bridgeTesting === "mattermost" ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3" />
+                  )}
+                  Test Mattermost
+                </button>
+              )}
+            </div>
+            {/* Test results */}
+            {Object.entries(bridgeTestResult).map(([p, r]) => (
+              <p key={p} className={`text-xs mt-2 ${r.ok ? "text-emerald-400" : "text-red-400"}`}>
+                {p}: {r.msg}
+              </p>
+            ))}
+          </div>
+        ) : (
+          /* Edit mode */
+          <div className="space-y-4">
+            <h3 className="text-xs text-gray-500">Telegram</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Bot Token</label>
+                <div className="flex gap-2">
+                  <input
+                    type={showTokens.tgToken ? "text" : "password"}
+                    value={bridgeDraft.telegram?.bot_token || ""}
+                    onChange={(e) =>
+                      setBridgeDraft((d) => ({
+                        ...d,
+                        telegram: { ...d.telegram, bot_token: e.target.value },
+                      }))
+                    }
+                    placeholder="123456:ABC-DEF..."
+                    className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  />
+                  <button
+                    onClick={() => setShowTokens((s) => ({ ...s, tgToken: !s.tgToken }))}
+                    className="p-1.5 text-gray-500 hover:text-white"
+                  >
+                    {showTokens.tgToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">User ID (for notifications)</label>
+                <input
+                  type="text"
+                  value={bridgeDraft.telegram?.user_id || ""}
+                  onChange={(e) =>
+                    setBridgeDraft((d) => ({
+                      ...d,
+                      telegram: { ...d.telegram, user_id: e.target.value },
+                    }))
+                  }
+                  placeholder="123456789"
+                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Webhook Base URL (blank for polling)</label>
+                <input
+                  type="text"
+                  value={bridgeDraft.telegram?.webhook_base_url || ""}
+                  onChange={(e) =>
+                    setBridgeDraft((d) => ({
+                      ...d,
+                      telegram: { ...d.telegram, webhook_base_url: e.target.value },
+                    }))
+                  }
+                  placeholder="https://your-server.com"
+                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                />
+              </div>
+            </div>
+
+            <h3 className="text-xs text-gray-500 pt-2">Mattermost</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Server URL</label>
+                <input
+                  type="text"
+                  value={bridgeDraft.mattermost?.url || ""}
+                  onChange={(e) =>
+                    setBridgeDraft((d) => ({
+                      ...d,
+                      mattermost: { ...d.mattermost, url: e.target.value },
+                    }))
+                  }
+                  placeholder="https://mattermost.example.com"
+                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Bot Token</label>
+                <div className="flex gap-2">
+                  <input
+                    type={showTokens.mmToken ? "text" : "password"}
+                    value={bridgeDraft.mattermost?.bot_token || ""}
+                    onChange={(e) =>
+                      setBridgeDraft((d) => ({
+                        ...d,
+                        mattermost: { ...d.mattermost, bot_token: e.target.value },
+                      }))
+                    }
+                    placeholder="abcdefghijklmnop"
+                    className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  />
+                  <button
+                    onClick={() => setShowTokens((s) => ({ ...s, mmToken: !s.mmToken }))}
+                    className="p-1.5 text-gray-500 hover:text-white"
+                  >
+                    {showTokens.mmToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Channel ID</label>
+                <input
+                  type="text"
+                  value={bridgeDraft.mattermost?.channel_id || ""}
+                  onChange={(e) =>
+                    setBridgeDraft((d) => ({
+                      ...d,
+                      mattermost: { ...d.mattermost, channel_id: e.target.value },
+                    }))
+                  }
+                  placeholder="abc123def456"
+                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={saveBridgeConfig}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setBridgeEditing(false)}
+                className="px-4 py-1.5 bg-gray-800 text-gray-400 hover:text-white border border-gray-700 rounded-lg text-sm transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="text-xs text-gray-600">Restart required for changes to take effect.</p>
+          </div>
+        )}
+
+        {/* Message Log toggle */}
+        {bridgeLog && bridgeLog.length > 0 && (
+          <div className="mt-5">
+            <button
+              onClick={() => setShowBridgeLog(!showBridgeLog)}
+              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              {showBridgeLog ? "Hide" : "Show"} Message Log ({bridgeLog.length})
+            </button>
+            {showBridgeLog && (
+              <div className="space-y-1.5 mt-3 max-h-60 overflow-y-auto">
+                {bridgeLog.map((entry: BridgeLogEntry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-1.5 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={
+                          entry.direction === "inbound"
+                            ? "text-blue-400"
+                            : "text-emerald-400"
+                        }
+                      >
+                        {entry.direction === "inbound" ? "IN" : "OUT"}
+                      </span>
+                      <span className="text-gray-500 uppercase">{entry.platform}</span>
+                      {entry.intent && (
+                        <span className="text-indigo-400">{entry.intent}</span>
+                      )}
+                      <span className="text-gray-400 truncate max-w-64">
+                        {entry.text || ""}
+                      </span>
+                    </div>
+                    <span className="text-gray-600 shrink-0 ml-2">
+                      {formatDistanceToNow(new Date(entry.created_at), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Export / Backup */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4">Export & Backup</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a
+            href="/api/export/json"
+            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors"
+          >
+            <div className="text-left">
+              <span className="text-sm text-white">JSON Backup</span>
+              <p className="text-xs text-gray-500">Full database export</p>
+            </div>
+          </a>
+          <a
+            href="/api/export/markdown"
+            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors"
+          >
+            <div className="text-left">
+              <span className="text-sm text-white">Markdown Archive</span>
+              <p className="text-xs text-gray-500">All notes as .md files (zip)</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      {/* API Info */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4">API</h2>
+        <p className="text-xs text-gray-500">
+          API documentation available at{" "}
+          <a
+            href="/docs"
+            target="_blank"
+            className="text-indigo-400 hover:text-indigo-300"
+          >
+            /docs
+          </a>{" "}
+          (Swagger UI)
+        </p>
+      </section>
+    </div>
+  );
+}

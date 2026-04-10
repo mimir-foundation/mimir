@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Mimir Capture",
+  "version": "1.0.0",
+  "description": "Save anything to your Mimir second brain",
+  "permissions": ["activeTab", "contextMenus", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+M"
+      },
+      "description": "Open Mimir capture"
+    }
+  },
+  "icons": {
+    "48": "icon48.png"
+  }
+}

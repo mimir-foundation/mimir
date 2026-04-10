@@ -1,0 +1,148 @@
+Screen {
+    background: #0f172a;
+}
+
+Header {
+    background: #1e1b4b;
+    color: #c7d2fe;
+}
+
+Footer {
+    background: #1e293b;
+}
+
+/* Stat cards row */
+.stats-bar {
+    height: 3;
+    layout: horizontal;
+    padding: 0 1;
+}
+
+.stat-card {
+    border: solid #374151;
+    background: #1f2937;
+    padding: 0 2;
+    width: 1fr;
+    content-align: center middle;
+}
+
+.stat-value {
+    text-style: bold;
+    color: #e2e8f0;
+}
+
+.stat-label {
+    color: #64748b;
+}
+
+/* Panels */
+.panel {
+    border: solid #374151;
+    background: #1f2937;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+.panel-title {
+    color: #818cf8;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+/* Brief panel */
+.brief-panel {
+    border: solid #312e81;
+    background: #1e1b4b 20%;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+/* Note detail sidebar */
+.sidebar {
+    width: 35;
+    border-left: solid #374151;
+    padding: 1 2;
+    background: #1f2937;
+}
+
+.sidebar .label {
+    margin-bottom: 1;
+}
+
+/* Capture modal */
+CaptureScreen {
+    align: center middle;
+}
+
+CaptureScreen > Vertical {
+    width: 80;
+    height: auto;
+    max-height: 80%;
+    background: #1f2937;
+    border: solid #6366f1;
+    padding: 1 2;
+}
+
+/* Connection type colors */
+.conn-related { color: #818cf8; }
+.conn-builds_on { color: #34d399; }
+.conn-contradicts { color: #f87171; }
+.conn-supports { color: #2dd4bf; }
+.conn-inspired_by { color: #c084fc; }
+
+/* Buttons */
+Button {
+    margin: 0 1;
+}
+
+Button.-primary {
+    background: #4f46e5;
+}
+
+/* DataTable */
+DataTable {
+    background: #111827;
+}
+
+DataTable > .datatable--cursor {
+    background: #312e81;
+}
+
+/* Input */
+Input {
+    background: #111827;
+    border: solid #374151;
+}
+
+Input:focus {
+    border: solid #6366f1;
+}
+
+/* TextArea */
+TextArea {
+    background: #111827;
+    border: solid #374151;
+}
+
+/* Select */
+Select {
+    background: #111827;
+    border: solid #374151;
+}
+
+/* Status colors */
+.status-ok { color: #34d399; }
+.status-error { color: #f87171; }
+.status-pending { color: #fbbf24; }
+.status-running { color: #60a5fa; }
+
+/* Wizard */
+.wizard-progress {
+    height: 3;
+    padding: 1 2;
+    background: #1e293b;
+}
+
+.wizard-step {
+    padding: 2;
+}

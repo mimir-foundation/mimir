@@ -1,0 +1,34 @@
+# Environment & secrets
+.env
+tui/.env
+
+# Data
+data/
+ollama-models/
+
+# Dependencies
+node_modules/
+tui/.venv/
+
+# Build artifacts
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+tui/build/
+tui/*.egg-info/
+backend/build/
+backend/*.egg-info/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/

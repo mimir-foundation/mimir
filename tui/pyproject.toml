@@ -1,0 +1,23 @@
+[project]
+name = "mimir-tui"
+version = "0.1.0"
+description = "Mimir Terminal UI — full second brain experience in the terminal"
+requires-python = ">=3.12"
+dependencies = [
+    "textual>=0.80.0",
+    "httpx>=0.27.0",
+    "rich>=13.0",
+    "click>=8.1",
+    "platformdirs>=4.0",
+]
+
+[project.scripts]
+mimir = "mimir_tui.cli:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mimir_tui*"]
