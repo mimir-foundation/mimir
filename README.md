@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://res.cloudinary.com/dzthkpfkn/image/upload/v1775829477/mimir-chibi_ti4fqb.png" alt="Mimir" width="80" />
+  <img src="(https://res.cloudinary.com/dzthkpfkn/image/upload/v1775829396/Untitled_design_ure8fc.png" alt="Mimir" width="80" />
 </p>
 
 <h1 align="center">Mimir</h1>
