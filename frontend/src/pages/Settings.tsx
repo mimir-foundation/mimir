@@ -33,6 +33,7 @@ import {
   Send,
   Eye,
   EyeOff,
+  BellRing,
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
@@ -811,6 +812,76 @@ export default function Settings() {
             )}
           </div>
         )}
+      </section>
+
+      {/* Notification Preferences */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+          <BellRing className="w-4 h-4" /> Notification Preferences
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Choose which notifications are delivered to each channel.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-gray-500">
+                <th className="text-left pb-2 pr-4">Notification</th>
+                <th className="text-center pb-2 px-4">Dashboard</th>
+                <th className="text-center pb-2 px-4">Telegram</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-300">
+              {(["daily_brief", "connection_alert", "resurface"] as const).map((notifType) => (
+                <tr key={notifType} className="border-t border-gray-800">
+                  <td className="py-3 pr-4 capitalize">
+                    {notifType.replace("_", " ")}
+                  </td>
+                  {(["dashboard", "telegram"] as const).map((channel) => {
+                    const channels = bridgeConfig?.outbound_channels ?? {};
+                    const entries = channels[notifType] ?? [];
+                    const isEnabled = entries.some(
+                      (e) => typeof e === "object" && e.platform === channel,
+                    );
+                    return (
+                      <td key={channel} className="py-3 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isEnabled}
+                          onChange={async () => {
+                            const current = { ...bridgeConfig } as BridgeConfig;
+                            const ch = { ...(current.outbound_channels ?? {}) };
+                            let list = [...(ch[notifType] ?? [])];
+                            if (isEnabled) {
+                              list = list.filter(
+                                (e) => !(typeof e === "object" && e.platform === channel),
+                              );
+                            } else {
+                              const recipientId =
+                                channel === "telegram"
+                                  ? bridgeConfig?.telegram?.user_id ?? ""
+                                  : "";
+                              list.push({ platform: channel, recipient_id: recipientId });
+                            }
+                            ch[notifType] = list;
+                            current.outbound_channels = ch;
+                            try {
+                              await updateBridgeConfig(current);
+                              queryClient.invalidateQueries({ queryKey: ["bridge-config"] });
+                            } catch {
+                              // silent — UI will re-fetch
+                            }
+                          }}
+                          className="w-4 h-4 accent-indigo-500 cursor-pointer"
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {/* Export / Backup */}

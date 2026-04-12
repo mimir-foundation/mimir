@@ -288,7 +288,7 @@ export interface BridgeConfig {
   enabled_platforms?: string[];
   telegram?: { bot_token?: string; webhook_base_url?: string; user_id?: string };
   mattermost?: { url?: string; bot_token?: string; channel_id?: string; user_id?: string };
-  outbound_channels?: { daily_brief?: string[]; connection_alert?: string[]; resurface?: string[] };
+  outbound_channels?: Record<string, { platform: string; recipient_id: string }[]>;
   security?: { allowed_sender_ids?: { telegram?: string[]; mattermost?: string[] } };
 }
 
