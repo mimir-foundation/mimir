@@ -9,6 +9,7 @@ import Connections from "./pages/Connections";
 import EntityPage from "./pages/EntityPage";
 import ConceptPage from "./pages/ConceptPage";
 import Capture from "./pages/Capture";
+import Chat from "./pages/Chat";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
       {/* Main app with sidebar layout */}
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/search" element={<Search />} />
         <Route path="/browse" element={<Browse />} />
         <Route path="/notes/:noteId" element={<NoteView />} />

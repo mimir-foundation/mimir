@@ -33,6 +33,8 @@ class Intent(StrEnum):
     TAG = "tag"
     CONFIRM = "confirm"
     SKIP = "skip"
+    SAVE = "save"
+    IGNORE = "ignore"
 
 
 class InboundMessage(BaseModel):
