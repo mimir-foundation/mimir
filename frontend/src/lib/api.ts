@@ -147,6 +147,31 @@ export function getExportMarkdownUrl() {
   return `${BASE}/export/markdown`;
 }
 
+// Import
+export function importNotion(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return fetch(`${BASE}/import/notion`, { method: "POST", body: form }).then(
+    (r) => r.json() as Promise<{ imported: number; errors: number; error?: string }>,
+  );
+}
+
+export function importObsidian(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return fetch(`${BASE}/import/obsidian`, { method: "POST", body: form }).then(
+    (r) => r.json() as Promise<{ imported: number; errors: number; error?: string }>,
+  );
+}
+
+export function importBookmarks(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return fetch(`${BASE}/import/bookmarks`, { method: "POST", body: form }).then(
+    (r) => r.json() as Promise<{ imported: number; errors: number; error?: string }>,
+  );
+}
+
 // Stats
 export function getStats() {
   return request<Stats>("/stats");

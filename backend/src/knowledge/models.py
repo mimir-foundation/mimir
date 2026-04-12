@@ -20,6 +20,7 @@ class SourceType(StrEnum):
     HIGHLIGHT = "highlight"
     TELEGRAM = "telegram"
     MATTERMOST = "mattermost"
+    IMPORT = "import"
 
 
 class ProcessingStatus(StrEnum):

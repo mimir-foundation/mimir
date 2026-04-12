@@ -16,6 +16,9 @@ import {
   getBridgeLog,
   getApiKeys,
   updateApiKeys,
+  importNotion,
+  importObsidian,
+  importBookmarks,
 } from "../lib/api";
 import type { BridgeConfig, BridgeLogEntry, BridgeStatus } from "../lib/api";
 import {
@@ -34,6 +37,7 @@ import {
   Eye,
   EyeOff,
   BellRing,
+  Upload,
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
@@ -162,6 +166,27 @@ export default function Settings() {
   const [bridgeTestResult, setBridgeTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [showTokens, setShowTokens] = useState<Record<string, boolean>>({});
   const [showBridgeLog, setShowBridgeLog] = useState(false);
+  const [importLoading, setImportLoading] = useState("");
+  const [importResult, setImportResult] = useState<{ format: string; msg: string; ok: boolean } | null>(null);
+
+  async function handleImport(format: string, file: File) {
+    setImportLoading(format);
+    setImportResult(null);
+    try {
+      const fn = format === "notion" ? importNotion : format === "obsidian" ? importObsidian : importBookmarks;
+      const res = await fn(file);
+      if (res.error) {
+        setImportResult({ format, msg: res.error, ok: false });
+      } else {
+        setImportResult({ format, msg: `Imported ${res.imported} items${res.errors ? `, ${res.errors} errors` : ""}`, ok: true });
+        queryClient.invalidateQueries({ queryKey: ["stats"] });
+      }
+    } catch (e: unknown) {
+      setImportResult({ format, msg: e instanceof Error ? e.message : "Import failed", ok: false });
+    } finally {
+      setImportLoading("");
+    }
+  }
 
   function startEditBridge() {
     setBridgeDraft(bridgeConfig || {});
@@ -882,6 +907,53 @@ export default function Settings() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* Import */}
+      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+          <Upload className="w-4 h-4" /> Import
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Import notes from other tools. Each file is processed and indexed in the background.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { format: "notion", label: "Notion Export", accept: ".zip", desc: "Markdown zip from Notion" },
+            { format: "obsidian", label: "Obsidian Vault", accept: ".zip", desc: "Zipped vault folder" },
+            { format: "bookmarks", label: "Browser Bookmarks", accept: ".html,.htm", desc: "HTML bookmark export" },
+          ].map(({ format, label, accept, desc }) => (
+            <label
+              key={format}
+              className="flex items-center gap-3 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors cursor-pointer"
+            >
+              <input
+                type="file"
+                accept={accept}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImport(format, file);
+                  e.target.value = "";
+                }}
+              />
+              {importLoading === format ? (
+                <Loader2 className="w-5 h-5 text-indigo-400 animate-spin shrink-0" />
+              ) : (
+                <Upload className="w-5 h-5 text-gray-500 shrink-0" />
+              )}
+              <div className="text-left">
+                <span className="text-sm text-white">{label}</span>
+                <p className="text-xs text-gray-500">{desc}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+        {importResult && (
+          <p className={`text-xs mt-3 ${importResult.ok ? "text-emerald-400" : "text-red-400"}`}>
+            {importResult.msg}
+          </p>
+        )}
       </section>
 
       {/* Export / Backup */}

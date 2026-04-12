@@ -135,6 +135,7 @@ from src.api.browse_router import router as browse_router
 from src.api.settings_router import router as settings_router
 from src.api.agent_router import router as agent_router
 from src.api.export_router import router as export_router
+from src.api.import_router import router as import_router
 
 app.include_router(capture_router)
 app.include_router(search_router)
@@ -142,6 +143,7 @@ app.include_router(browse_router)
 app.include_router(settings_router)
 app.include_router(agent_router)
 app.include_router(export_router)
+app.include_router(import_router)
 
 try:
     from src.bridge.router import webhook_router, management_router
