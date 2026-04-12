@@ -210,6 +210,18 @@ async def delete_note(request: Request, note_id: str):
     # Delete from vector store
     request.app.state.vector_store.delete_note(note_id)
 
+    # Delete document store files on disk
+    try:
+        from src.config import get_settings
+        from src.knowledge.document_store import DocumentStore
+        doc_store = DocumentStore(get_settings().documents_path)
+        doc_store.delete_document(note_id)
+    except Exception:
+        pass
+
+    # Delete orphaned interest_signals (no FK constraint)
+    await db.execute("DELETE FROM interest_signals WHERE note_id = ?", (note_id,))
+
     # Cascade delete in SQLite (foreign keys handle most)
     await db.execute("DELETE FROM notes WHERE id = ?", (note_id,))
 
