@@ -54,6 +54,16 @@ class Settings(BaseSettings):
     mattermost_channel_id: Optional[str] = None
     bridge_webhook_base_url: Optional[str] = None
 
+    # SMTP (weekly digest email)
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from: Optional[str] = None
+    smtp_recipient: Optional[str] = None
+    digest_day: str = "monday"  # day of week for weekly digest
+    digest_hour: int = 8  # hour (24h) to send digest
+
     # Logging
     log_level: str = "info"
 

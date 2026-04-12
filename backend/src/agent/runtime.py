@@ -69,6 +69,14 @@ async def job_rebuild_taxonomy(app) -> None:
     logger.info(f"Taxonomy rebuild result: {result}")
 
 
+async def job_send_digest(app) -> None:
+    """Weekly: send digest email if SMTP is configured."""
+    logger.info("Sending weekly digest...")
+    from src.agent.digest import send_digest
+    ok = await send_digest()
+    logger.info(f"Weekly digest {'sent' if ok else 'skipped/failed'}")
+
+
 # --- Event Handlers ---
 
 async def on_note_processed(note_id: str) -> None:
@@ -209,5 +217,16 @@ def register_agent_jobs(scheduler, app) -> None:
         job_rebuild_taxonomy, "cron", day_of_week="sun", hour=4, args=[app],
         id="rebuild_taxonomy", max_instances=1, coalesce=True,
     )
+
+    # Weekly digest email (only if SMTP configured)
+    if settings.smtp_host and settings.smtp_recipient:
+        day_map = {"monday": "mon", "tuesday": "tue", "wednesday": "wed",
+                    "thursday": "thu", "friday": "fri", "saturday": "sat", "sunday": "sun"}
+        digest_dow = day_map.get(settings.digest_day.lower(), "mon")
+        scheduler.add_job(
+            job_send_digest, "cron", day_of_week=digest_dow, hour=settings.digest_hour,
+            args=[app], id="weekly_digest", max_instances=1, coalesce=True,
+        )
+        logger.info(f"Weekly digest scheduled: {settings.digest_day} at {settings.digest_hour:02d}:00")
 
     logger.info(f"Agent jobs registered (brief at {brief_hour:02d}:{brief_minute:02d})")

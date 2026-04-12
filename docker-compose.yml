@@ -38,6 +38,14 @@ services:
       - MATTERMOST_BOT_TOKEN=${MATTERMOST_BOT_TOKEN:-}
       - MATTERMOST_CHANNEL_ID=${MATTERMOST_CHANNEL_ID:-}
       - BRIDGE_WEBHOOK_BASE_URL=${BRIDGE_WEBHOOK_BASE_URL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_RECIPIENT=${SMTP_RECIPIENT:-}
+      - DIGEST_DAY=${DIGEST_DAY:-monday}
+      - DIGEST_HOUR=${DIGEST_HOUR:-8}
     volumes:
       - ${DATA_PATH:-./data}:/data
     depends_on:
