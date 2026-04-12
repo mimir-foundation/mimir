@@ -23,8 +23,8 @@ class SearchScreen(Screen):
                 yield RadioButton("Search", value=True, id="mode-search")
                 yield RadioButton("Ask", id="mode-ask")
             yield Select(
-                [(("All sources", ""), ("Manual", "manual"), ("URL", "url"),
-                  ("File", "file"), ("Email", "email"))],
+                [("All sources", ""), ("Manual", "manual"), ("URL", "url"),
+                 ("File", "file"), ("Email", "email")],
                 value="",
                 id="source-filter",
                 prompt="Source type",
