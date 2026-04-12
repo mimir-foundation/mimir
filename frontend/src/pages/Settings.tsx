@@ -92,6 +92,7 @@ export default function Settings() {
   const [bridgeTestResult, setBridgeTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [showTokens, setShowTokens] = useState<Record<string, boolean>>({});
   const [showBridgeLog, setShowBridgeLog] = useState(false);
+  const [bridgeSaving, setBridgeSaving] = useState(false);
   const [bridgeSaveResult, setBridgeSaveResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Import state
@@ -142,6 +143,7 @@ export default function Settings() {
   }
 
   async function saveBridgeConfig() {
+    setBridgeSaving(true);
     setBridgeSaveResult(null);
     try {
       const res = await updateBridgeConfig(bridgeDraft);
@@ -156,6 +158,8 @@ export default function Settings() {
       }
     } catch (e: unknown) {
       setBridgeSaveResult({ ok: false, msg: e instanceof Error ? e.message : "Save failed" });
+    } finally {
+      setBridgeSaving(false);
     }
   }
 
@@ -184,19 +188,32 @@ export default function Settings() {
   }
 
   async function toggleNotification(notifType: string, channel: string, isEnabled: boolean) {
-    const channels = { ...(bridgeConfig?.outbound_channels ?? {}) };
-    let list = [...(channels[notifType] ?? [])];
+    const channels: Record<string, { platform: string; recipient_id: string }[]> = {};
+    // Copy all existing channel lists
+    const existing = bridgeConfig?.outbound_channels ?? {};
+    for (const key of Object.keys(existing)) {
+      channels[key] = [...(existing[key] ?? [])];
+    }
+    // Ensure the target list exists
+    if (!channels[notifType]) channels[notifType] = [];
+    let list = channels[notifType];
     if (isEnabled) {
-      list = list.filter((e) => !(typeof e === "object" && e.platform === channel));
+      channels[notifType] = list.filter((e) => e.platform !== channel);
     } else {
       const recipientId = channel === "telegram" ? bridgeConfig?.telegram?.user_id ?? "" : "";
       list.push({ platform: channel, recipient_id: recipientId });
     }
-    channels[notifType] = list;
+    // Optimistic update: immediately reflect in UI
+    queryClient.setQueryData(["bridge-config"], (old: BridgeConfig | undefined) => ({
+      ...old,
+      outbound_channels: channels,
+    }));
     try {
       await patchBridgeConfig({ outbound_channels: channels });
+    } catch {
+      // Revert on failure
       queryClient.invalidateQueries({ queryKey: ["bridge-config"] });
-    } catch { /* silent */ }
+    }
   }
 
   const presets = [
@@ -490,8 +507,11 @@ export default function Settings() {
                     onChange={(v) => setBridgeDraft((d) => ({ ...d, mattermost: { ...d.mattermost, channel_id: v } }))} />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button onClick={saveBridgeConfig} className="px-4 py-1.5 bg-brand-500 hover:bg-brand-400 text-white rounded-lg text-sm transition-colors">Save & Connect</button>
-                  <button onClick={() => setBridgeEditing(false)} className="px-4 py-1.5 bg-surface-3 text-zinc-400 hover:text-white border border-border-subtle rounded-lg text-sm transition-colors">Cancel</button>
+                  <button onClick={saveBridgeConfig} disabled={bridgeSaving} className="flex items-center gap-2 px-4 py-1.5 bg-brand-500 hover:bg-brand-400 disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
+                    {bridgeSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {bridgeSaving ? "Connecting..." : "Save & Connect"}
+                  </button>
+                  <button onClick={() => setBridgeEditing(false)} disabled={bridgeSaving} className="px-4 py-1.5 bg-surface-3 text-zinc-400 hover:text-white border border-border-subtle rounded-lg text-sm transition-colors disabled:opacity-50">Cancel</button>
                 </div>
               </div>
             )}
