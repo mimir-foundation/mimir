@@ -133,11 +133,12 @@ async def init_bridge(app) -> Optional[BridgeState]:
             async def _on_telegram_update(update: dict):
                 msg = tg.normalize(update)
                 if msg and security.is_authorized(msg):
-                    resp = await handler.handle(msg, tg)
-                    formatted = tg.format_text(resp.text)
-                    resp.text = formatted
-                    resp.parse_mode = "MarkdownV2"
-                    await tg.send(resp)
+                    responses = await handler.handle(msg, tg)
+                    for resp in responses:
+                        formatted = tg.format_text(resp.text)
+                        resp.text = formatted
+                        resp.parse_mode = "MarkdownV2"
+                        await tg.send(resp)
 
             tg._on_update = _on_telegram_update
             tg.start_polling()
@@ -184,11 +185,12 @@ async def telegram_webhook(request: Request):
     if not _bridge_state.security.is_authorized(msg):
         return {"ok": True}  # Silent drop per Telegram convention
 
-    resp = await _bridge_state.handler.handle(msg, adapter)
-    formatted = adapter.format_text(resp.text)
-    resp.text = formatted
-    resp.parse_mode = "MarkdownV2"
-    await adapter.send(resp)
+    responses = await _bridge_state.handler.handle(msg, adapter)
+    for resp in responses:
+        formatted = adapter.format_text(resp.text)
+        resp.text = formatted
+        resp.parse_mode = "MarkdownV2"
+        await adapter.send(resp)
     return {"ok": True}
 
 
@@ -221,11 +223,9 @@ async def mattermost_webhook(request: Request):
     if not _bridge_state.security.is_authorized(msg):
         return {"text": ""}
 
-    resp = await _bridge_state.handler.handle(msg, adapter)
-
-    # Mattermost outgoing webhooks expect a JSON response with "text"
-    # to reply inline. Also send via API for richer formatting.
-    await adapter.send(resp)
+    responses = await _bridge_state.handler.handle(msg, adapter)
+    for resp in responses:
+        await adapter.send(resp)
     return {"text": ""}
 
 
