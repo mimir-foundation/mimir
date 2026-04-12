@@ -28,28 +28,27 @@ HELP_TEXT = """**Mimir Messaging Bridge**
 Questions ending with `?` are auto-detected as Ask queries."""
 
 
-    @staticmethod
-    def _split_message(text: str, limit: int = 4000) -> list[str]:
-        """Split long text into chunks that fit within platform character limits.
+def _split_message(text: str, limit: int = 4000) -> list[str]:
+    """Split long text into chunks that fit within platform character limits.
 
-        Splits at paragraph boundaries when possible, falling back to hard splits.
-        """
+    Splits at paragraph boundaries when possible, falling back to hard splits.
+    """
+    if len(text) <= limit:
+        return [text]
+    parts: list[str] = []
+    while text:
         if len(text) <= limit:
-            return [text]
-        parts: list[str] = []
-        while text:
-            if len(text) <= limit:
-                parts.append(text)
-                break
-            # Try to split at a paragraph boundary
-            cut = text.rfind("\n\n", 0, limit)
-            if cut < limit // 2:
-                cut = text.rfind("\n", 0, limit)
-            if cut < limit // 2:
-                cut = limit
-            parts.append(text[:cut].rstrip())
-            text = text[cut:].lstrip()
-        return parts
+            parts.append(text)
+            break
+        # Try to split at a paragraph boundary
+        cut = text.rfind("\n\n", 0, limit)
+        if cut < limit // 2:
+            cut = text.rfind("\n", 0, limit)
+        if cut < limit // 2:
+            cut = limit
+        parts.append(text[:cut].rstrip())
+        text = text[cut:].lstrip()
+    return parts
 
 
 class MessageHandler:
@@ -77,7 +76,7 @@ class MessageHandler:
             return []
 
         # Split long responses for platforms with character limits
-        chunks = self._split_message(response_text)
+        chunks = _split_message(response_text)
         return [
             OutboundMessage(
                 platform=message.platform,
