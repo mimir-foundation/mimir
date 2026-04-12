@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { captureNote, captureUrl, getNotes } from "../lib/api";
 import { formatDistanceToNow } from "date-fns";
-import { Send, Loader2, Check, Globe, MessageSquare } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  Check,
+  Globe,
+  MessageSquare,
+  Paperclip,
+  Mic,
+  Camera,
+  Square,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 /**
@@ -13,6 +23,10 @@ export default function Capture() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"" | "success" | "error">("");
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: recent } = useQuery({
@@ -98,6 +112,130 @@ export default function Capture() {
           </p>
         )}
       </form>
+
+      {/* Extra capture modes */}
+      <div className="px-4 grid grid-cols-3 gap-3">
+        {/* File upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setLoading(true);
+            setStatus("");
+            try {
+              const form = new FormData();
+              form.append("file", file);
+              const res = await fetch("/api/capture/file", { method: "POST", body: form });
+              if (!res.ok) throw new Error("Upload failed");
+              setStatus("success");
+              queryClient.invalidateQueries({ queryKey: ["notes"] });
+              setTimeout(() => setStatus(""), 3000);
+            } catch {
+              setStatus("error");
+            } finally {
+              setLoading(false);
+              e.target.value = "";
+            }
+          }}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading}
+          className="flex flex-col items-center gap-1.5 py-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-300 hover:border-indigo-500 transition-colors disabled:opacity-50"
+        >
+          <Paperclip className="w-5 h-5" />
+          <span className="text-xs">File</span>
+        </button>
+
+        {/* Voice recording */}
+        <button
+          onClick={async () => {
+            if (recording && mediaRecorderRef.current) {
+              mediaRecorderRef.current.stop();
+              setRecording(false);
+              return;
+            }
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              const mr = new MediaRecorder(stream);
+              const chunks: Blob[] = [];
+              mr.ondataavailable = (e) => chunks.push(e.data);
+              mr.onstop = async () => {
+                stream.getTracks().forEach((t) => t.stop());
+                const blob = new Blob(chunks, { type: "audio/webm" });
+                const form = new FormData();
+                form.append("file", blob, "voice.webm");
+                setLoading(true);
+                try {
+                  const res = await fetch("/api/capture/voice", { method: "POST", body: form });
+                  if (!res.ok) throw new Error("Upload failed");
+                  setStatus("success");
+                  queryClient.invalidateQueries({ queryKey: ["notes"] });
+                  setTimeout(() => setStatus(""), 3000);
+                } catch {
+                  setStatus("error");
+                } finally {
+                  setLoading(false);
+                }
+              };
+              mediaRecorderRef.current = mr;
+              mr.start();
+              setRecording(true);
+            } catch {
+              setStatus("error");
+            }
+          }}
+          disabled={loading}
+          className={`flex flex-col items-center gap-1.5 py-3 border rounded-xl transition-colors disabled:opacity-50 ${
+            recording
+              ? "bg-red-950 border-red-500 text-red-300"
+              : "bg-gray-900 border-gray-700 text-gray-300 hover:border-indigo-500"
+          }`}
+        >
+          {recording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          <span className="text-xs">{recording ? "Stop" : "Voice"}</span>
+        </button>
+
+        {/* Camera capture */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setLoading(true);
+            setStatus("");
+            try {
+              const form = new FormData();
+              form.append("file", file);
+              const res = await fetch("/api/capture/file", { method: "POST", body: form });
+              if (!res.ok) throw new Error("Upload failed");
+              setStatus("success");
+              queryClient.invalidateQueries({ queryKey: ["notes"] });
+              setTimeout(() => setStatus(""), 3000);
+            } catch {
+              setStatus("error");
+            } finally {
+              setLoading(false);
+              e.target.value = "";
+            }
+          }}
+        />
+        <button
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={loading}
+          className="flex flex-col items-center gap-1.5 py-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-300 hover:border-indigo-500 transition-colors disabled:opacity-50"
+        >
+          <Camera className="w-5 h-5" />
+          <span className="text-xs">Camera</span>
+        </button>
+      </div>
 
       {/* Recent captures */}
       <div className="flex-1 px-4 pb-4">
