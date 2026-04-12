@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Mimir API",
-    version="0.3.0",
+    version="0.3.1",
     description="Self-hosted AI second brain agent",
     lifespan=lifespan,
 )
@@ -125,7 +125,7 @@ async def api_key_auth(request: Request, call_next):
 # Health check
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.3.0"}
+    return {"status": "ok", "version": "0.3.1"}
 
 
 # Mount routers
