@@ -150,6 +150,16 @@ try:
 except Exception as e:
     logger.warning(f"Bridge routers failed to load: {e}")
 
+# Mount MCP server (graceful degradation if mcp not installed)
+try:
+    from src.mcp_server import create_mcp_app
+    app.mount("/mcp", create_mcp_app())
+    logger.info("MCP server mounted at /mcp")
+except ImportError:
+    logger.info("MCP not installed — skipping MCP server mount")
+except Exception as e:
+    logger.warning(f"MCP server failed to mount: {e}")
+
 
 if __name__ == "__main__":
     import uvicorn
