@@ -79,6 +79,17 @@ export function getNoteActions(noteId: string) {
   return request<{ actions: NoteAction[] }>(`/notes/${noteId}/actions`);
 }
 
+// Errored notes
+export function getErroredNotes() {
+  return request<{ notes: ErroredNote[] }>("/errored-notes");
+}
+
+export function retryNote(id: string) {
+  return request<{ ok: boolean; error?: string }>(`/notes/${id}/retry`, {
+    method: "POST",
+  });
+}
+
 // Concepts & Entities
 export function getConcepts() {
   return request<{ concepts: Concept[] }>("/concepts");
@@ -291,6 +302,16 @@ export interface NoteAction {
   status: string;
   dispatched_at: string | null;
   created_at: string;
+}
+
+export interface ErroredNote {
+  id: string;
+  title: string | null;
+  source_type: string;
+  created_at: string;
+  error_message: string;
+  error_at: string | null;
+  retry_count: number;
 }
 
 export interface DailyBrief {

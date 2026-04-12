@@ -228,6 +228,50 @@ async def delete_note(request: Request, note_id: str):
     return {"ok": True}
 
 
+@router.get("/errored-notes")
+async def get_errored_notes():
+    """Return notes with processing errors, including error details from agent_log."""
+    notes = await db.fetch_all(
+        "SELECT id, title, source_type, created_at, processing_status FROM notes WHERE processing_status = 'error' ORDER BY created_at DESC LIMIT 50"
+    )
+    results = []
+    for note in notes:
+        # Find latest error from agent_log for this note
+        log = await db.fetch_one(
+            "SELECT error_message, completed_at FROM agent_log WHERE details LIKE ? AND status = 'error' ORDER BY completed_at DESC LIMIT 1",
+            (f'%{note["id"]}%',),
+        )
+        # Count how many times it has been retried
+        retry_count = await db.fetch_one(
+            "SELECT COUNT(*) as cnt FROM agent_log WHERE details LIKE ? AND status = 'error'",
+            (f'%{note["id"]}%',),
+        )
+        results.append({
+            **note,
+            "error_message": log["error_message"] if log else "Unknown error",
+            "error_at": log["completed_at"] if log else None,
+            "retry_count": retry_count["cnt"] if retry_count else 0,
+        })
+    return {"notes": results}
+
+
+@router.post("/notes/{note_id}/retry")
+async def retry_note(note_id: str):
+    """Reset an errored note to pending so the pipeline reprocesses it."""
+    note = await db.fetch_one(
+        "SELECT id, processing_status FROM notes WHERE id = ?", (note_id,)
+    )
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if note["processing_status"] != "error":
+        return {"ok": False, "error": "Note is not in error state"}
+    await db.execute(
+        "UPDATE notes SET processing_status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (note_id,),
+    )
+    return {"ok": True}
+
+
 @router.get("/concepts")
 async def list_concepts():
     concepts = await db.fetch_all(

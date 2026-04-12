@@ -6,6 +6,8 @@ import {
   getResurfaceItems,
   clickResurface,
   dismissResurface,
+  getErroredNotes,
+  retryNote,
 } from "../lib/api";
 import NoteCard from "../components/NoteCard";
 import { Link } from "react-router-dom";
@@ -19,7 +21,10 @@ import {
   Bell,
   X,
   ChevronRight,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
+import { useState } from "react";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -52,6 +57,26 @@ export default function Dashboard() {
     queryFn: () => getResurfaceItems(5),
     refetchInterval: 30_000,
   });
+
+  const { data: erroredData } = useQuery({
+    queryKey: ["errored-notes"],
+    queryFn: getErroredNotes,
+    refetchInterval: 30_000,
+    enabled: (stats?.errored ?? 0) > 0,
+  });
+
+  const [retrying, setRetrying] = useState<string>("");
+
+  async function handleRetry(noteId: string) {
+    setRetrying(noteId);
+    try {
+      await retryNote(noteId);
+      queryClient.invalidateQueries({ queryKey: ["errored-notes"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    } finally {
+      setRetrying("");
+    }
+  }
 
   async function handleResurfaceClick(id: string) {
     await clickResurface(id);
@@ -160,6 +185,53 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Errored Notes */}
+      {erroredData?.notes && erroredData.notes.length > 0 && (
+        <section className="bg-red-950/20 border border-red-900/40 rounded-lg p-5">
+          <h2 className="text-sm font-medium text-red-300 mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Errored Notes
+            <span className="bg-red-900/40 text-red-300 text-xs px-2 py-0.5 rounded-full">
+              {erroredData.notes.length}
+            </span>
+          </h2>
+          <div className="space-y-2">
+            {erroredData.notes.map((note) => (
+              <div
+                key={note.id}
+                className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white font-medium truncate">
+                    {note.title || "Untitled"}
+                  </p>
+                  <p className="text-xs text-red-400 mt-0.5 line-clamp-1">
+                    {note.error_message}
+                  </p>
+                  {note.retry_count > 0 && (
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Retried {note.retry_count}x
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleRetry(note.id)}
+                  disabled={retrying === note.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-red-500 rounded-lg text-xs transition-colors disabled:opacity-50"
+                >
+                  {retrying === note.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3" />
+                  )}
+                  Retry
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Starred */}
