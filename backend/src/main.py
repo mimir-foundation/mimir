@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import Settings, get_settings
+from src.knowledge import database as db
 from src.knowledge.database import close_db, init_db, get_db
 from src.knowledge.vector_store import VectorStore
 
@@ -25,17 +26,25 @@ async def lifespan(app: FastAPI):
     app.state.vector_store = VectorStore(settings.chroma_path)
     logger.info("Vector store initialized")
 
-    # Initialize AI harness (overlay DB-stored API keys if present)
+    # Initialize AI harness (overlay DB-stored API keys + persisted preset)
     from src.harness.router import HarnessRouter, load_harness_config_with_db_keys
+    import json as _json
     db_keys = {}
     try:
-        import json as _json
         _row = await db.fetch_one("SELECT value FROM settings WHERE key = 'api_keys'")
         if _row:
             db_keys = _json.loads(_row["value"])
     except Exception:
         pass
-    config = load_harness_config_with_db_keys(settings, settings.harness_preset, db_keys)
+    # Load persisted preset, fall back to env var
+    preset = settings.harness_preset
+    try:
+        _preset_row = await db.fetch_one("SELECT value FROM settings WHERE key = 'active_preset'")
+        if _preset_row:
+            preset = _json.loads(_preset_row["value"])
+    except Exception:
+        pass
+    config = load_harness_config_with_db_keys(settings, preset, db_keys)
     app.state.harness = HarnessRouter(config)
     logger.info("AI harness initialized")
 

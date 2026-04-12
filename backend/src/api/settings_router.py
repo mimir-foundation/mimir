@@ -81,6 +81,12 @@ async def apply_preset(request: Request, preset_name: str):
     config = load_harness_config_with_db_keys(settings, preset_name, db_keys)
     request.app.state.harness.reload(config)
 
+    # Persist preset selection so it survives restarts
+    await db.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+        ("active_preset", json.dumps(preset_name)),
+    )
+
     return {"ok": True, "preset": preset_name}
 
 
