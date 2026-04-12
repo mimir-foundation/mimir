@@ -128,6 +128,16 @@ export function askQuestion(q: string) {
   return request<AskResponse>(`/search?q=${encodeURIComponent(q)}&mode=ask`);
 }
 
+export function askWithContext(
+  q: string,
+  conversation: { role: string; content: string }[],
+) {
+  return request<AskResponse>("/search", {
+    method: "POST",
+    body: JSON.stringify({ q, conversation }),
+  });
+}
+
 // Export
 export function getExportJsonUrl() {
   return `${BASE}/export/json`;

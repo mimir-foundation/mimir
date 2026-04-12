@@ -79,7 +79,7 @@ class MimirSearch:
 
         return results
 
-    async def ask(self, question: str) -> dict:
+    async def ask(self, question: str, conversation: list[dict] | None = None) -> dict:
         """Natural language Q&A over the knowledge base.
 
         1. Search for relevant notes (top 10)
@@ -114,11 +114,20 @@ class MimirSearch:
 
         formatted_notes = "\n\n---\n\n".join(note_texts)
 
+        # Build conversation history context if provided
+        history_block = ""
+        if conversation:
+            lines = []
+            for msg in conversation[-4:]:
+                role = msg.get("role", "user").upper()
+                lines.append(f"{role}: {msg.get('content', '')}")
+            history_block = "CONVERSATION HISTORY:\n" + "\n".join(lines) + "\n\n"
+
         prompt = f"""You are the user's second brain. Answer their question using ONLY the
 knowledge they have previously captured. If you don't have enough
 information in the provided notes, say so honestly.
 
-QUESTION: {question}
+{history_block}QUESTION: {question}
 
 RELEVANT NOTES:
 {formatted_notes}

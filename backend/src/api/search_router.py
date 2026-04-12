@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Request
+from pydantic import BaseModel
 
 from src.knowledge.models import SearchFilters
 from src.search.engine import MimirSearch
@@ -66,3 +67,24 @@ async def search(
         "results": [r.model_dump() for r in paged],
         "total": len(results),
     }
+
+
+class AskRequest(BaseModel):
+    q: str
+    conversation: list[dict] | None = None
+
+
+@router.post("")
+async def ask_with_context(request: Request, body: AskRequest):
+    """Ask with conversation history for multi-turn chat."""
+    engine = MimirSearch(
+        harness=request.app.state.harness,
+        vector_store=request.app.state.vector_store,
+    )
+    result = await engine.ask(body.q, conversation=body.conversation)
+    try:
+        from src.agent.runtime import on_search
+        await on_search(body.q)
+    except Exception:
+        pass
+    return result
