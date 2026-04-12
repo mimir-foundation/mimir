@@ -12,6 +12,11 @@ import {
   Link2,
   Clock,
   BookOpen,
+  CalendarPlus,
+  Bell,
+  CheckSquare,
+  UserPlus,
+  RotateCcw,
 } from "lucide-react";
 
 export default function NoteView() {
@@ -158,6 +163,58 @@ export default function NoteView() {
           {note.processed_content || note.raw_content}
         </ReactMarkdown>
       </div>
+
+      {/* Actions */}
+      {(note as any).actions && (note as any).actions.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+            <CalendarPlus className="w-4 h-4" /> Actions
+          </h2>
+          <div className="space-y-2">
+            {(note as any).actions.map((a: any) => {
+              const payload = typeof a.payload === "string" ? JSON.parse(a.payload) : a.payload;
+              const icons: Record<string, typeof CalendarPlus> = {
+                calendar_event: CalendarPlus,
+                reminder: Bell,
+                task: CheckSquare,
+                contact: UserPlus,
+                follow_up: RotateCcw,
+              };
+              const Icon = icons[a.action_type] || CalendarPlus;
+              const statusColors: Record<string, string> = {
+                dispatched: "text-emerald-400",
+                pending: "text-blue-400",
+                pending_confirmation: "text-amber-400",
+                failed: "text-red-400",
+                skipped: "text-gray-500",
+              };
+              return (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-3"
+                >
+                  <Icon className={`w-4 h-4 ${statusColors[a.status] || "text-gray-400"}`} />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm text-white">{payload.title || a.action_type}</span>
+                    {payload.start && (
+                      <span className="text-xs text-gray-500 ml-2">{payload.start}</span>
+                    )}
+                    {payload.location && (
+                      <span className="text-xs text-gray-500 ml-2">{payload.location}</span>
+                    )}
+                    {payload.recurring && (
+                      <span className="text-xs text-amber-400 ml-2">Recurring: {payload.recurring}</span>
+                    )}
+                  </div>
+                  <span className={`text-xs ${statusColors[a.status] || "text-gray-500"}`}>
+                    {a.status.replace("_", " ")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Connections */}
       {note.connections && note.connections.length > 0 && (

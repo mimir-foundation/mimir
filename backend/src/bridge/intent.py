@@ -17,6 +17,8 @@ SLASH_COMMANDS: dict[str, Intent] = {
     "/tag": Intent.TAG,
     "/status": Intent.STATUS,
     "/help": Intent.HELP,
+    "/confirm": Intent.CONFIRM,
+    "/skip": Intent.SKIP,
 }
 
 # Question patterns that suggest ASK intent

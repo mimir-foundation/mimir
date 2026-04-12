@@ -1,3 +1,4 @@
+import base64
 import logging
 from typing import Optional
 
@@ -28,6 +29,7 @@ class OllamaProvider:
         temperature: float = 0.3,
         max_tokens: int = 2048,
         response_format: Optional[str] = None,
+        images: Optional[list[bytes]] = None,
     ) -> str:
         payload = {
             "model": self._model,
@@ -42,6 +44,8 @@ class OllamaProvider:
             payload["system"] = system
         if response_format == "json":
             payload["format"] = "json"
+        if images:
+            payload["images"] = [base64.b64encode(img).decode("utf-8") for img in images]
 
         resp = await self._client.post("/api/generate", json=payload)
         resp.raise_for_status()

@@ -156,6 +156,15 @@ async def init_bridge(app) -> Optional[BridgeState]:
     return state
 
 
+async def reload_bridge(app) -> Optional[BridgeState]:
+    """Tear down existing bridge and re-initialize from current config."""
+    global _bridge_state
+    if _bridge_state:
+        await _bridge_state.shutdown()
+        _bridge_state = None
+    return await init_bridge(app)
+
+
 # ===== Webhook endpoints =====
 
 
@@ -261,13 +270,23 @@ async def bridge_config():
 
 @management_router.put("/config")
 async def update_bridge_config(request: Request):
-    """Update bridge settings."""
+    """Update bridge settings and hot-reload the bridge."""
     body = await request.json()
     await db.execute(
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
         ("bridge", json.dumps(body)),
     )
-    return {"status": "updated", "note": "Restart required for changes to take effect"}
+
+    # Hot-reload: tear down and re-init with new config
+    try:
+        new_state = await reload_bridge(request.app)
+        request.app.state.bridge = new_state
+        platforms = list(new_state.adapters.keys()) if new_state else []
+        logger.info(f"Bridge hot-reloaded: {platforms}")
+        return {"status": "reloaded", "platforms": platforms}
+    except Exception as e:
+        logger.error(f"Bridge reload failed: {e}")
+        return {"status": "saved", "error": str(e), "note": "Config saved but reload failed. Try restarting."}
 
 
 @management_router.post("/test/{platform}")

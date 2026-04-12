@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Request, UploadFile
 
 from src.knowledge import database as db
 from src.knowledge.models import (
@@ -96,6 +96,7 @@ async def capture_url(req: UrlCaptureRequest):
 
 @router.post("/file", response_model=CaptureResponse)
 async def capture_file(
+    request: Request,
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
@@ -116,6 +117,7 @@ async def capture_file(
     # Extract text based on file type
     content = ""
     filename = (file.filename or "").lower()
+    mime = file.content_type or ""
     if filename.endswith(".pdf"):
         try:
             import fitz  # pymupdf
@@ -125,6 +127,11 @@ async def capture_file(
         except Exception as e:
             logger.error(f"PDF extraction failed: {e}")
             content = f"[PDF file: {file.filename}]"
+    elif mime.startswith("image/") or filename.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp")):
+        # Save placeholder — vision analysis happens in the processing pipeline
+        content = f"[image:{note_id}:{file.filename or 'upload'}:{mime}]"
+        if context:
+            content += f"\n\n{context}"
     elif filename.endswith((".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".html")):
         content = file_bytes.decode("utf-8", errors="replace")
     else:

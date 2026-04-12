@@ -31,6 +31,8 @@ class Intent(StrEnum):
     RECENT = "recent"
     STAR = "star"
     TAG = "tag"
+    CONFIRM = "confirm"
+    SKIP = "skip"
 
 
 class InboundMessage(BaseModel):

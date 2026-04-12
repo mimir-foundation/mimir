@@ -25,9 +25,17 @@ async def lifespan(app: FastAPI):
     app.state.vector_store = VectorStore(settings.chroma_path)
     logger.info("Vector store initialized")
 
-    # Initialize AI harness
-    from src.harness.router import HarnessRouter, load_harness_config
-    config = load_harness_config(settings)
+    # Initialize AI harness (overlay DB-stored API keys if present)
+    from src.harness.router import HarnessRouter, load_harness_config_with_db_keys
+    db_keys = {}
+    try:
+        import json as _json
+        _row = await db.fetch_one("SELECT value FROM settings WHERE key = 'api_keys'")
+        if _row:
+            db_keys = _json.loads(_row["value"])
+    except Exception:
+        pass
+    config = load_harness_config_with_db_keys(settings, settings.harness_preset, db_keys)
     app.state.harness = HarnessRouter(config)
     logger.info("AI harness initialized")
 

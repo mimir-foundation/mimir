@@ -101,6 +101,24 @@ class TelegramAdapter(PlatformAdapter):
             logger.error(f"Telegram send failed: {e}")
             return False
 
+    async def send_document(
+        self, recipient_id: str, file_bytes: bytes, filename: str, caption: str = "",
+    ) -> bool:
+        """Send a file (e.g. .ics) to a Telegram chat."""
+        try:
+            files = {"document": (filename, file_bytes)}
+            data = {"chat_id": recipient_id}
+            if caption:
+                data["caption"] = caption[:1024]
+            resp = await self._client.post(
+                f"{self._api}/sendDocument", data=data, files=files,
+            )
+            resp.raise_for_status()
+            return True
+        except Exception as e:
+            logger.error(f"Telegram sendDocument failed: {e}")
+            return False
+
     # --- Format ---
 
     def format_text(self, text: str) -> str:

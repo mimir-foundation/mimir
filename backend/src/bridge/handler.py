@@ -20,6 +20,8 @@ HELP_TEXT = """**Mimir Messaging Bridge**
 **Recent:** `/recent`
 **Star last:** `/star`
 **Tag last:** `/tag <name>`
+**Confirm action:** `/confirm <id>`
+**Skip action:** `/skip <id>`
 **Status:** `/status`
 **Help:** `/help`
 
@@ -78,6 +80,14 @@ class MessageHandler:
         if intent == Intent.ASK:
             question = strip_command(text, ["/ask ", "/a "])
             return await self._handle_ask(question)
+
+        if intent == Intent.CONFIRM:
+            action_prefix = strip_command(text, ["/confirm "])
+            return await self._handle_confirm(action_prefix)
+
+        if intent == Intent.SKIP:
+            action_prefix = strip_command(text, ["/skip "])
+            return await self._handle_skip(action_prefix)
 
         if intent == Intent.STAR:
             return await self._handle_star(message.platform, message.sender_id)
@@ -139,39 +149,88 @@ class MessageHandler:
         if not message.media_url:
             return "No media found in message."
 
-        media_bytes, mime = await adapter.download_media(message.media_url)
+        media_bytes, download_mime = await adapter.download_media(message.media_url)
 
-        # Audio: transcribe first
-        content = ""
-        if message.message_type == "audio":
+        # Prefer the mime type from the platform payload over the download headers
+        # (Telegram often returns application/octet-stream for everything)
+        mime = message.media_mime_type or download_mime
+        if mime == "application/octet-stream" or not mime:
+            # Infer from message type
+            type_to_mime = {
+                "image": "image/jpeg",
+                "audio": "audio/ogg",
+                "document": "application/octet-stream",
+            }
+            mime = type_to_mime.get(message.message_type, mime or "application/octet-stream")
+
+        # Determine filename from mime type
+        ext_map = {
+            "image/jpeg": "photo.jpg", "image/png": "photo.png",
+            "image/webp": "photo.webp", "audio/ogg": "voice.ogg",
+            "audio/mpeg": "audio.mp3", "application/pdf": "document.pdf",
+        }
+        filename = ext_map.get(mime, f"file.{mime.split('/')[-1]}" if "/" in mime else "file.bin")
+
+        # Store the file immediately
+        from src.config import get_settings
+        from src.knowledge.document_store import DocumentStore
+
+        settings = get_settings()
+        doc_store = DocumentStore(settings.documents_path)
+        note_id = new_id()
+        doc_store.store_document(note_id, media_bytes, filename)
+
+        # Build placeholder content — pipeline will do the heavy analysis
+        caption = message.caption or ""
+        if mime and mime.startswith("image/"):
+            title = "Photo"
+            content = f"[image:{note_id}:{filename}:{mime}]"
+            if caption:
+                content += f"\n\n{caption}"
+        elif message.message_type == "audio":
+            title = "Voice note"
+            content = f"[audio:{note_id}:{filename}:{mime}]"
+        elif mime == "application/pdf":
+            title = filename
+            # PDFs are fast to extract — do it inline
             try:
-                from src.harness import AIOperation
-
-                content = await self.harness.complete(
-                    operation=AIOperation.TRANSCRIBE,
-                    prompt="",
-                    audio_bytes=media_bytes,
-                )
-            except Exception as e:
-                logger.warning(f"Transcription failed: {e}")
-                content = f"[Audio: {len(media_bytes)} bytes, transcription failed]"
-        if not content:
-            content = message.caption or f"[Media: {mime}, {len(media_bytes)} bytes]"
+                import fitz
+                doc = fitz.open(stream=media_bytes, filetype="pdf")
+                content = "\n\n".join(page.get_text() for page in doc)
+                doc.close()
+                if not content.strip():
+                    content = f"[PDF: {filename}, {len(media_bytes)} bytes — no extractable text]"
+            except Exception:
+                content = f"[PDF: {filename}, {len(media_bytes)} bytes]"
+        elif mime and mime.startswith("text/"):
+            title = filename
+            try:
+                content = media_bytes.decode("utf-8", errors="replace")
+            except Exception:
+                content = f"[Text file: {filename}, {len(media_bytes)} bytes]"
+        else:
+            title = filename
+            content = caption or f"[{filename}: {mime}, {len(media_bytes)} bytes]"
 
         source_type = (
             SourceType.TELEGRAM
             if message.platform == Platform.TELEGRAM
             else SourceType.MATTERMOST
         )
-        from src.capture.router import _create_note
 
-        resp = await _create_note(
-            content=content,
-            source_type=source_type,
-            source_uri=f"bridge:{message.platform}:{message.platform_message_id}",
+        now = datetime.utcnow().isoformat()
+        await db.execute(
+            """INSERT INTO notes (id, source_type, source_uri, title, raw_content,
+               created_at, updated_at, processing_status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')""",
+            (note_id, source_type,
+             f"bridge:{message.platform}:{message.platform_message_id}",
+             title, content, now, now),
         )
-        await self._update_session(message.platform, message.sender_id, resp.note_id)
-        return f"Captured media note: {resp.note_id[:8]}..."
+
+        await self._update_session(message.platform, message.sender_id, note_id)
+        label = title or filename
+        return f"Captured {label}, analyzing..."
 
     async def _handle_search(self, query: str) -> str:
         if not query:
@@ -267,6 +326,33 @@ class MessageHandler:
                 (note_id, tag_row["id"]),
             )
         return f"Tagged with: {tag_name}"
+
+    async def _handle_confirm(self, action_prefix: str) -> str:
+        if not action_prefix:
+            return "Usage: /confirm <action-id>"
+        # Find action by prefix match
+        row = await db.fetch_one(
+            "SELECT id FROM note_actions WHERE status = 'pending_confirmation' AND id LIKE ?",
+            (f"{action_prefix}%",),
+        )
+        if not row:
+            return f"No pending action found matching '{action_prefix}'"
+        from src.processing.dispatcher import confirm_action
+        result = await confirm_action(row["id"])
+        return result or "Action not found"
+
+    async def _handle_skip(self, action_prefix: str) -> str:
+        if not action_prefix:
+            return "Usage: /skip <action-id>"
+        row = await db.fetch_one(
+            "SELECT id FROM note_actions WHERE status = 'pending_confirmation' AND id LIKE ?",
+            (f"{action_prefix}%",),
+        )
+        if not row:
+            return f"No pending action found matching '{action_prefix}'"
+        from src.processing.dispatcher import skip_action
+        result = await skip_action(row["id"])
+        return result or "Action not found"
 
     async def _handle_status(self) -> str:
         count = await db.fetch_one("SELECT COUNT(*) as cnt FROM notes")

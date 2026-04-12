@@ -150,6 +150,20 @@ CREATE TABLE IF NOT EXISTS daily_briefs (
     delivered_webhook INTEGER DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS note_actions (
+    id TEXT PRIMARY KEY,
+    note_id TEXT REFERENCES notes(id) ON DELETE CASCADE,
+    action_type TEXT NOT NULL,
+    payload JSON NOT NULL,
+    status TEXT DEFAULT 'pending',
+    dispatched_at DATETIME,
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_note_actions_status ON note_actions(status);
+CREATE INDEX IF NOT EXISTS idx_note_actions_note ON note_actions(note_id);
+
 CREATE TABLE IF NOT EXISTS bridge_message_log (
     id TEXT PRIMARY KEY,
     platform TEXT NOT NULL,

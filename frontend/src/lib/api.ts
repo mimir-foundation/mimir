@@ -75,6 +75,10 @@ export function deleteNote(id: string) {
   return request<{ ok: boolean }>(`/notes/${id}`, { method: "DELETE" });
 }
 
+export function getNoteActions(noteId: string) {
+  return request<{ actions: NoteAction[] }>(`/notes/${noteId}/actions`);
+}
+
 // Concepts & Entities
 export function getConcepts() {
   return request<{ concepts: Concept[] }>("/concepts");
@@ -156,6 +160,17 @@ export function applyPreset(name: string) {
   });
 }
 
+export function getApiKeys() {
+  return request<Record<string, string>>("/harness/api-keys");
+}
+
+export function updateApiKeys(keys: Record<string, string>) {
+  return request<{ ok: boolean; reloaded: boolean }>("/harness/api-keys", {
+    method: "PUT",
+    body: JSON.stringify(keys),
+  });
+}
+
 // Agent
 export function getBrief(date?: string) {
   const params = date ? `?date=${date}` : "";
@@ -222,7 +237,7 @@ export function getBridgeConfig() {
 }
 
 export function updateBridgeConfig(config: BridgeConfig) {
-  return request<{ status: string }>("/bridge/config", {
+  return request<{ status: string; platforms?: string[]; error?: string }>("/bridge/config", {
     method: "PUT",
     body: JSON.stringify(config),
   });
@@ -265,6 +280,16 @@ export interface BridgeLogEntry {
   text: string | null;
   status: string;
   response_text: string | null;
+  created_at: string;
+}
+
+export interface NoteAction {
+  id: string;
+  note_id: string;
+  action_type: string;
+  payload: Record<string, unknown>;
+  status: string;
+  dispatched_at: string | null;
   created_at: string;
 }
 

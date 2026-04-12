@@ -129,13 +129,28 @@ async def get_note(note_id: str):
         (note_id, note_id),
     )
 
+    actions = await db.fetch_all(
+        "SELECT * FROM note_actions WHERE note_id = ? ORDER BY created_at",
+        (note_id,),
+    )
+
     return {
         **note,
         "concepts": [dict(c) for c in concepts],
         "entities": [dict(e) for e in entities],
         "tags": [dict(t) for t in tags],
         "connections": [dict(c) for c in connections],
+        "actions": [dict(a) for a in actions],
     }
+
+
+@router.get("/notes/{note_id}/actions")
+async def get_note_actions(note_id: str):
+    actions = await db.fetch_all(
+        "SELECT * FROM note_actions WHERE note_id = ? ORDER BY created_at",
+        (note_id,),
+    )
+    return {"actions": [dict(a) for a in actions]}
 
 
 @router.put("/notes/{note_id}")

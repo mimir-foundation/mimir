@@ -14,6 +14,8 @@ import {
   updateBridgeConfig,
   testBridge,
   getBridgeLog,
+  getApiKeys,
+  updateApiKeys,
 } from "../lib/api";
 import type { BridgeConfig, BridgeLogEntry, BridgeStatus } from "../lib/api";
 import {
@@ -92,6 +94,45 @@ export default function Settings() {
     refetchInterval: 15_000,
   });
 
+  const { data: apiKeys } = useQuery({
+    queryKey: ["api-keys"],
+    queryFn: async () => {
+      try { return await getApiKeys(); }
+      catch { return { anthropic: "", openai: "", google: "" }; }
+    },
+  });
+
+  const [editingKeys, setEditingKeys] = useState(false);
+  const [keyDraft, setKeyDraft] = useState<Record<string, string>>({});
+  const [keySaveResult, setKeySaveResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
+
+  function startEditKeys() {
+    // Start with empty — user enters full keys (masked values aren't useful to edit)
+    setKeyDraft({ anthropic: "", openai: "", google: "" });
+    setEditingKeys(true);
+    setKeySaveResult(null);
+  }
+
+  async function saveApiKeys() {
+    setKeySaveResult(null);
+    try {
+      // Only send keys the user actually typed — blank means "don't change"
+      const toSend: Record<string, string> = {};
+      for (const [k, v] of Object.entries(keyDraft)) {
+        if (v.trim()) toSend[k] = v.trim();
+      }
+      const res = await updateApiKeys(toSend);
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["harness-config"] });
+      queryClient.invalidateQueries({ queryKey: ["harness-health"] });
+      setEditingKeys(false);
+      setKeySaveResult({ ok: true, msg: res.reloaded ? "Keys saved and AI engine reloaded." : "Keys saved." });
+    } catch (e: unknown) {
+      setKeySaveResult({ ok: false, msg: e instanceof Error ? e.message : "Save failed" });
+    }
+  }
+
   async function handleApplyPreset(preset: string) {
     setApplying(preset);
     try {
@@ -126,14 +167,28 @@ export default function Settings() {
     setBridgeEditing(true);
   }
 
+  const [bridgeSaveResult, setBridgeSaveResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
   async function saveBridgeConfig() {
+    setBridgeSaveResult(null);
     try {
-      await updateBridgeConfig(bridgeDraft);
+      const res = await updateBridgeConfig(bridgeDraft);
       queryClient.invalidateQueries({ queryKey: ["bridge-config"] });
       queryClient.invalidateQueries({ queryKey: ["bridge-status"] });
       setBridgeEditing(false);
-    } catch {
-      // keep editing on error
+      if (res.status === "reloaded") {
+        const platforms = (res as Record<string, unknown>).platforms as string[] | undefined;
+        setBridgeSaveResult({
+          ok: true,
+          msg: platforms?.length
+            ? `Connected: ${platforms.join(", ")}`
+            : "Saved. No platforms configured yet.",
+        });
+      } else {
+        setBridgeSaveResult({ ok: false, msg: (res as Record<string, unknown>).error as string || "Saved but reload failed." });
+      }
+    } catch (e: unknown) {
+      setBridgeSaveResult({ ok: false, msg: e instanceof Error ? e.message : "Save failed" });
     }
   }
 
@@ -305,6 +360,85 @@ export default function Settings() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* API Keys */}
+        <div className="mb-6">
+          <h3 className="text-xs text-gray-500 mb-2">API Keys</h3>
+          {!editingKeys ? (
+            <div>
+              <div className="space-y-2 mb-3">
+                {[
+                  { key: "anthropic", label: "Anthropic" },
+                  { key: "openai", label: "OpenAI" },
+                  { key: "google", label: "Google" },
+                ].map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
+                  >
+                    <span className="text-sm text-gray-300">{label}</span>
+                    <span className="text-xs text-gray-500">
+                      {(apiKeys as Record<string, string>)?.[key] || "Not set"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={startEditKeys}
+                className="px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors"
+              >
+                Edit API Keys
+              </button>
+              {keySaveResult && (
+                <p className={`text-xs mt-2 ${keySaveResult.ok ? "text-emerald-400" : "text-red-400"}`}>
+                  {keySaveResult.msg}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {[
+                { key: "anthropic", label: "Anthropic API Key", placeholder: "sk-ant-..." },
+                { key: "openai", label: "OpenAI API Key", placeholder: "sk-..." },
+                { key: "google", label: "Google API Key", placeholder: "AIza..." },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="text-xs text-gray-400 block mb-1">{label}</label>
+                  <div className="flex gap-2">
+                    <input
+                      type={showApiKeys[key] ? "text" : "password"}
+                      value={keyDraft[key] || ""}
+                      onChange={(e) => setKeyDraft((d) => ({ ...d, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                    />
+                    <button
+                      onClick={() => setShowApiKeys((s) => ({ ...s, [key]: !s[key] }))}
+                      className="p-1.5 text-gray-500 hover:text-white"
+                    >
+                      {showApiKeys[key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-gray-600">Leave blank to keep existing key. Only non-empty fields are updated.</p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveApiKeys}
+                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm transition-colors"
+                >
+                  Save Keys
+                </button>
+                <button
+                  onClick={() => setEditingKeys(false)}
+                  className="px-4 py-1.5 bg-gray-800 text-gray-400 hover:text-white border border-gray-700 rounded-lg text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {config && (
@@ -485,7 +619,12 @@ export default function Settings() {
                 </button>
               )}
             </div>
-            {/* Test results */}
+            {/* Save / test results */}
+            {bridgeSaveResult && (
+              <p className={`text-xs mt-3 ${bridgeSaveResult.ok ? "text-emerald-400" : "text-amber-400"}`}>
+                {bridgeSaveResult.msg}
+              </p>
+            )}
             {Object.entries(bridgeTestResult).map(([p, r]) => (
               <p key={p} className={`text-xs mt-2 ${r.ok ? "text-emerald-400" : "text-red-400"}`}>
                 {p}: {r.msg}
@@ -623,7 +762,7 @@ export default function Settings() {
                 Cancel
               </button>
             </div>
-            <p className="text-xs text-gray-600">Restart required for changes to take effect.</p>
+            <p className="text-xs text-gray-500">Saving will automatically connect to configured platforms.</p>
           </div>
         )}
 

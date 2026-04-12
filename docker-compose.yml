@@ -59,11 +59,11 @@ services:
     volumes:
       - ${OLLAMA_MODELS_PATH:-./ollama-models}:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 5s
+      retries: 10
+      start_period: 10s
     # Uncomment for GPU passthrough:
     # deploy:
     #   resources:

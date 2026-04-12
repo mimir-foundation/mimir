@@ -27,6 +27,7 @@ async def process_note(note_id: str, harness, vector_store) -> None:
         from src.processing.normalizer import normalize
         processed_content, word_count, reading_time = await normalize(
             note["raw_content"], note["source_type"], note.get("source_uri"),
+            harness=harness, note_id=note_id,
         )
         await db.execute(
             """UPDATE notes SET processed_content = ?, word_count = ?, reading_time_seconds = ?,
@@ -44,10 +45,17 @@ async def process_note(note_id: str, harness, vector_store) -> None:
         # Stage 3: Extract
         from src.processing.extractor import extract
         extraction = await extract(note_id, processed_content, note["source_type"], harness)
-        await db.execute("UPDATE notes SET processing_stage = 'embed' WHERE id = ?", (note_id,))
+        await db.execute("UPDATE notes SET processing_stage = 'dispatch' WHERE id = ?", (note_id,))
         logger.info(f"[{note_id}] Extracted: {len(extraction.concepts)} concepts, {len(extraction.entities)} entities")
 
-        # Stage 4: Embed
+        # Stage 4: Dispatch (actions)
+        from src.processing.dispatcher import dispatch_actions
+        action_count = await dispatch_actions(note_id, extraction, harness)
+        if action_count:
+            logger.info(f"[{note_id}] Dispatched: {action_count} actions")
+        await db.execute("UPDATE notes SET processing_stage = 'embed' WHERE id = ?", (note_id,))
+
+        # Stage 5: Embed
         from src.processing.embedder import embed
         entity_names = [e.name for e in extraction.entities]
         await embed(

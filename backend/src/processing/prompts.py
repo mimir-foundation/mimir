@@ -18,8 +18,29 @@ Respond in JSON only:
   "content_type": "reference|opinion|tutorial|story|idea|question|quote|data",
   "temporal_relevance": "evergreen|time-sensitive|historical",
   "expiry_hint": null,
-  "action_items": ["implicit or explicit todo"]
-}}"""
+  "action_items": ["implicit or explicit todo"],
+  "actions": [
+    {{
+      "action_type": "calendar_event|reminder|task|contact|follow_up",
+      "title": "event or task title",
+      "start": "ISO 8601 datetime if applicable (e.g. 2026-04-25T14:00:00)",
+      "end": "ISO 8601 datetime if applicable",
+      "location": "place if applicable",
+      "description": "brief description",
+      "recurring": "null for one-time, or 'daily'|'weekly'|'monthly'|'yearly' if recurring",
+      "due_date": "ISO 8601 date for tasks/reminders",
+      "contact_info": null
+    }}
+  ]
+}}
+
+IMPORTANT for the "actions" field:
+- Only include actions when the content contains CLEAR, SPECIFIC dates, events, deadlines, tasks, reminders, or contact details.
+- For calendar events: extract the exact date and time. If the year is not stated, assume the next occurrence.
+- For tasks/reminders: extract due dates if mentioned.
+- For contacts: extract name, email, phone, company into contact_info.
+- If no actionable content is found, return an empty actions array.
+- Do NOT fabricate dates or events that are not explicitly stated in the content."""
 
 
 def build_link_validation_prompt(

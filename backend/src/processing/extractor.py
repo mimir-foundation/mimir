@@ -4,7 +4,7 @@ import re
 
 from src.harness import AIOperation
 from src.knowledge import database as db
-from src.knowledge.models import ExtractionResult, EntityExtraction, new_id
+from src.knowledge.models import ExtractionResult, EntityExtraction, ActionExtraction, new_id
 
 logger = logging.getLogger("mimir.processing.extractor")
 
@@ -61,6 +61,21 @@ async def extract(note_id: str, processed_content: str, source_type: str, harnes
         temporal_relevance=data.get("temporal_relevance", "evergreen"),
         expiry_hint=data.get("expiry_hint"),
         action_items=data.get("action_items", []),
+        actions=[
+            ActionExtraction(
+                action_type=a.get("action_type", "task"),
+                title=a.get("title", ""),
+                start=a.get("start"),
+                end=a.get("end"),
+                location=a.get("location"),
+                description=a.get("description"),
+                recurring=a.get("recurring"),
+                due_date=a.get("due_date"),
+                contact_info=a.get("contact_info"),
+            )
+            for a in data.get("actions", [])
+            if isinstance(a, dict) and a.get("action_type")
+        ],
     )
 
     # Upsert concepts

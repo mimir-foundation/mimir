@@ -134,6 +134,26 @@ class EntityExtraction(BaseModel):
     role: Optional[str] = None
 
 
+class ActionType(StrEnum):
+    CALENDAR_EVENT = "calendar_event"
+    REMINDER = "reminder"
+    TASK = "task"
+    CONTACT = "contact"
+    FOLLOW_UP = "follow_up"
+
+
+class ActionExtraction(BaseModel):
+    action_type: str
+    title: str = ""
+    start: Optional[str] = None
+    end: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    recurring: Optional[str] = None  # e.g. "weekly", "daily", "RRULE:..."
+    due_date: Optional[str] = None
+    contact_info: Optional[dict] = None
+
+
 class ExtractionResult(BaseModel):
     suggested_title: Optional[str] = None
     concepts: list[str] = []
@@ -143,6 +163,7 @@ class ExtractionResult(BaseModel):
     temporal_relevance: str = "evergreen"
     expiry_hint: Optional[str] = None
     action_items: list[str] = []
+    actions: list[ActionExtraction] = []
 
 
 # --- API models ---

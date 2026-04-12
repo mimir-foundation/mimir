@@ -71,13 +71,84 @@ async def harness_presets():
 @router.post("/harness/presets/{preset_name}/apply")
 async def apply_preset(request: Request, preset_name: str):
     from src.config import get_settings
-    from src.harness.router import PRESETS, HarnessRouter
+    from src.harness.router import PRESETS, load_harness_config_with_db_keys
 
     if preset_name not in PRESETS:
         return {"error": f"Unknown preset: {preset_name}"}
 
     settings = get_settings()
-    config = PRESETS[preset_name](settings)
+    db_keys = await _load_api_keys()
+    config = load_harness_config_with_db_keys(settings, preset_name, db_keys)
     request.app.state.harness.reload(config)
 
     return {"ok": True, "preset": preset_name}
+
+
+@router.get("/harness/api-keys")
+async def get_api_keys():
+    """Get configured API keys (masked)."""
+    row = await db.fetch_one("SELECT value FROM settings WHERE key = 'api_keys'")
+    if not row:
+        return {"anthropic": "", "openai": "", "google": ""}
+    try:
+        keys = json.loads(row["value"])
+        # Mask keys in response
+        masked = {}
+        for provider, key in keys.items():
+            if key and len(key) > 8:
+                masked[provider] = key[:4] + "..." + key[-4:]
+            elif key:
+                masked[provider] = "***"
+            else:
+                masked[provider] = ""
+        return masked
+    except (json.JSONDecodeError, TypeError):
+        return {"anthropic": "", "openai": "", "google": ""}
+
+
+@router.put("/harness/api-keys")
+async def update_api_keys(request: Request, body: dict):
+    """Save API keys and hot-reload the harness.
+
+    Only keys present in the request body are updated.
+    Omitted keys keep their existing values.
+    """
+    # Load existing keys first
+    existing = await _load_api_keys()
+    keys = {
+        "anthropic": existing.get("anthropic", ""),
+        "openai": existing.get("openai", ""),
+        "google": existing.get("google", ""),
+    }
+    # Only overwrite keys that were explicitly provided
+    for provider in ("anthropic", "openai", "google"):
+        if provider in body and body[provider]:
+            keys[provider] = body[provider]
+    await db.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+        ("api_keys", json.dumps(keys)),
+    )
+
+    # Hot-reload harness with new keys
+    try:
+        from src.config import get_settings
+        from src.harness.router import load_harness_config_with_db_keys
+
+        settings = get_settings()
+        config = load_harness_config_with_db_keys(settings, settings.harness_preset, keys)
+        request.app.state.harness.reload(config)
+        return {"ok": True, "reloaded": True}
+    except Exception as e:
+        logger.warning(f"Harness reload after key update failed: {e}")
+        return {"ok": True, "reloaded": False, "error": str(e)}
+
+
+async def _load_api_keys() -> dict:
+    """Load raw API keys from DB settings."""
+    row = await db.fetch_one("SELECT value FROM settings WHERE key = 'api_keys'")
+    if not row:
+        return {}
+    try:
+        return json.loads(row["value"])
+    except (json.JSONDecodeError, TypeError):
+        return {}
