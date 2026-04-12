@@ -37,6 +37,11 @@ class MimirClient:
         resp.raise_for_status()
         return resp.json()
 
+    async def _patch(self, path: str, json: Any = None) -> dict:
+        resp = await self._http.patch(path, json=json)
+        resp.raise_for_status()
+        return resp.json()
+
     # Health
     async def health(self) -> dict:
         return await self._get("/api/health")
@@ -59,14 +64,27 @@ class MimirClient:
     async def search(self, q: str, mode: str = "search", source_type: str | None = None, limit: int = 20) -> dict:
         return await self._get("/api/search", q=q, mode=mode, source_type=source_type, limit=limit)
 
+    async def ask_with_conversation(self, q: str, conversation: list[dict]) -> dict:
+        return await self._post("/api/search", json={"q": q, "mode": "ask", "conversation": conversation})
+
+    # Errored Notes
+    async def get_errored_notes(self) -> dict:
+        return await self._get("/api/errored-notes")
+
+    async def retry_note(self, note_id: str) -> dict:
+        return await self._post(f"/api/notes/{note_id}/retry")
+
     # Notes
     async def get_notes(self, sort: str = "recent", limit: int = 20, offset: int = 0,
-                        is_starred: bool | None = None, processing_status: str | None = None) -> dict:
+                        is_starred: bool | None = None, processing_status: str | None = None,
+                        source_type: str | None = None) -> dict:
         params = {"sort": sort, "limit": limit, "offset": offset}
         if is_starred is not None:
             params["is_starred"] = str(is_starred).lower()
         if processing_status:
             params["processing_status"] = processing_status
+        if source_type:
+            params["source_type"] = source_type
         return await self._get("/api/notes", **params)
 
     async def get_note(self, note_id: str) -> dict:
@@ -141,6 +159,22 @@ class MimirClient:
     async def apply_preset(self, name: str) -> dict:
         return await self._post(f"/api/harness/presets/{name}/apply")
 
+    # Bridge Config
+    async def get_bridge_config(self) -> dict:
+        return await self._get("/api/bridge/config")
+
+    async def patch_bridge_config(self, data: dict) -> dict:
+        return await self._patch("/api/bridge/config", json=data)
+
+    # Import
+    async def import_file(self, source: str, file_path: str) -> dict:
+        with open(file_path, "rb") as f:
+            resp = await self._http.post(
+                f"/api/import/{source}", files={"file": f}, timeout=120.0
+            )
+        resp.raise_for_status()
+        return resp.json()
+
     # Export
     async def export_json(self) -> bytes:
         resp = await self._http.get("/api/export/json")
@@ -149,5 +183,10 @@ class MimirClient:
 
     async def export_markdown(self) -> bytes:
         resp = await self._http.get("/api/export/markdown")
+        resp.raise_for_status()
+        return resp.content
+
+    async def export_note(self, note_id: str) -> bytes:
+        resp = await self._http.get(f"/api/export/note/{note_id}")
         resp.raise_for_status()
         return resp.content
