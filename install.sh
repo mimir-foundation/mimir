@@ -110,22 +110,45 @@ ok "Models ready: nomic-embed-text, gemma3"
 
 # ── Install CLI ──────────────────────────────────────────────────────────────
 
+VENV_DIR="$INSTALL_DIR/.venv"
+
 info "Installing mimir CLI..."
 
-if command -v pipx &>/dev/null; then
-    pipx install -e "$INSTALL_DIR/tui" --force -q 2>/dev/null
-    ok "CLI installed via pipx"
-elif command -v pip3 &>/dev/null; then
-    pip3 install -e "$INSTALL_DIR/tui" --break-system-packages -q 2>/dev/null || \
-    pip3 install -e "$INSTALL_DIR/tui" -q 2>/dev/null
-    ok "CLI installed via pip3"
-elif command -v pip &>/dev/null; then
-    pip install -e "$INSTALL_DIR/tui" --break-system-packages -q 2>/dev/null || \
-    pip install -e "$INSTALL_DIR/tui" -q 2>/dev/null
-    ok "CLI installed via pip"
+# Ensure python3 + venv are available
+PYTHON=""
+for py in python3 python; do
+    if command -v "$py" &>/dev/null; then
+        PYTHON="$py"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    warn "Python not found — install the CLI manually:"
+    echo -e "  ${dim}  python3 -m venv $VENV_DIR && $VENV_DIR/bin/pip install -e $INSTALL_DIR/tui${reset}"
 else
-    warn "No pip/pipx found — install the CLI manually:"
-    echo -e "  ${dim}  pip install -e $INSTALL_DIR/tui${reset}"
+    # Create venv if it doesn't exist
+    if [ ! -d "$VENV_DIR" ]; then
+        if ! "$PYTHON" -m venv "$VENV_DIR" 2>/dev/null; then
+            info "Installing python3-venv..."
+            apt-get update -qq && apt-get install -y -qq python3-venv >/dev/null 2>&1 || true
+            "$PYTHON" -m venv "$VENV_DIR" || fail "Cannot create Python venv — install python3-venv"
+        fi
+    fi
+
+    "$VENV_DIR/bin/pip" install -q -e "$INSTALL_DIR/tui"
+    ok "CLI installed to $VENV_DIR"
+
+    # Symlink mimir into /usr/local/bin so it's on PATH
+    ln -sf "$VENV_DIR/bin/mimir" /usr/local/bin/mimir 2>/dev/null || \
+    ln -sf "$VENV_DIR/bin/mimir" "$HOME/.local/bin/mimir" 2>/dev/null || true
+
+    if command -v mimir &>/dev/null; then
+        ok "mimir command is ready"
+    else
+        warn "Add to your PATH:"
+        echo -e "  ${dim}  export PATH=\"$VENV_DIR/bin:\$PATH\"${reset}"
+    fi
 fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
