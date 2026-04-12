@@ -291,11 +291,7 @@ async def update_bridge_config(request: Request):
 
 @management_router.patch("/config")
 async def patch_bridge_config(request: Request):
-    """Partially update bridge settings (deep merge). Does NOT reload the bridge.
-
-    Use this for updating outbound_channels, security, etc. without
-    overwriting tokens or triggering a reconnect.
-    """
+    """Partially update bridge settings (deep merge) and hot-reload."""
     body = await request.json()
 
     # Load existing config
@@ -318,7 +314,15 @@ async def patch_bridge_config(request: Request):
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
         ("bridge", json.dumps(existing)),
     )
-    return {"status": "saved"}
+
+    # Hot-reload so bridge status reflects the new config
+    try:
+        new_state = await reload_bridge(request.app)
+        request.app.state.bridge = new_state
+        platforms = list(new_state.adapters.keys()) if new_state else []
+        return {"status": "reloaded", "platforms": platforms}
+    except Exception:
+        return {"status": "saved", "note": "Config saved but reload failed. Restart the backend."}
 
 
 @management_router.post("/test/{platform}")
