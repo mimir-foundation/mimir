@@ -6,7 +6,7 @@ import type { GraphNode, GraphEdge } from "../lib/api";
 import { Filter } from "lucide-react";
 
 const TYPE_COLORS: Record<string, string> = {
-  related: "#6366f1",
+  related: "#06b6d4",
   builds_on: "#10b981",
   contradicts: "#ef4444",
   supports: "#14b8a6",
@@ -54,11 +54,11 @@ export default function Connections() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-white">Connections</h1>
         <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-gray-500" />
+          <Filter className="w-4 h-4 text-zinc-500" />
           <select
             value={concept}
             onChange={(e) => setConcept(e.target.value)}
-            className="bg-gray-900 text-gray-300 border border-gray-700 rounded-lg px-3 py-1.5 text-xs"
+            className="bg-surface-2 text-zinc-300 border border-border-subtle rounded-lg px-3 py-1.5 text-xs"
           >
             <option value="">All concepts</option>
             {conceptsData?.concepts?.slice(0, 30).map((c) => (
@@ -67,7 +67,7 @@ export default function Connections() {
               </option>
             ))}
           </select>
-          <label className="text-xs text-gray-500 flex items-center gap-2">
+          <label className="text-xs text-zinc-500 flex items-center gap-2">
             Min strength
             <input
               type="range"
@@ -78,7 +78,7 @@ export default function Connections() {
               onChange={(e) => setMinStrength(parseFloat(e.target.value))}
               className="w-20"
             />
-            <span className="text-gray-400 w-6">{minStrength}</span>
+            <span className="text-zinc-400 w-6">{minStrength}</span>
           </label>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function Connections() {
       {/* Legend */}
       <div className="flex gap-4 mb-3 flex-wrap">
         {Object.entries(TYPE_COLORS).map(([type, color]) => (
-          <span key={type} className="flex items-center gap-1 text-xs text-gray-500">
+          <span key={type} className="flex items-center gap-1 text-xs text-zinc-500">
             <span
               className="w-3 h-0.5 rounded inline-block"
               style={{ backgroundColor: color }}
@@ -98,10 +98,10 @@ export default function Connections() {
 
       {/* Tooltip */}
       {hoveredNode && (
-        <div className="absolute z-10 bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl max-w-xs pointer-events-none"
+        <div className="absolute z-10 bg-surface-2 border border-border-subtle rounded-lg p-3 shadow-xl max-w-xs pointer-events-none"
              style={{ top: 180, right: 24 }}>
           <p className="text-sm text-white font-medium">{hoveredNode.title}</p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-zinc-500 mt-1">
             {hoveredNode.source_type} · {hoveredNode.connection_count} connections
           </p>
           {hoveredNode.concepts.length > 0 && (
@@ -117,9 +117,9 @@ export default function Connections() {
       )}
 
       {/* Graph */}
-      <div className="flex-1 bg-gray-900 rounded-lg border border-gray-800 overflow-hidden relative">
+      <div className="flex-1 bg-surface-2 rounded-lg border border-border-subtle overflow-hidden relative">
         {graph && graph.nodes.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+          <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
             No connections found. Capture more notes and they'll start connecting.
           </div>
         ) : (

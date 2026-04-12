@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { captureNote, captureUrl, getNotes } from "../lib/api";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Send,
+  ArrowUp,
   Loader2,
   Check,
   Globe,
@@ -15,10 +15,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-/**
- * Mobile-friendly capture page — minimal, responsive, optimized for phones.
- * Accessible at /capture without the sidebar layout.
- */
 export default function Capture() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -61,20 +57,18 @@ export default function Capture() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold">
-            M
-          </div>
-          <span className="font-semibold">Mimir</span>
+      <header className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="Mimir" className="w-8 h-8" />
+          <span className="font-bold text-[15px]">Mimir</span>
         </div>
         <Link
           to="/"
-          className="text-xs text-gray-500 hover:text-gray-300"
+          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
         >
-          Dashboard →
+          Dashboard
         </Link>
       </header>
 
@@ -86,19 +80,19 @@ export default function Capture() {
           placeholder="Type or paste anything..."
           rows={4}
           autoFocus
-          className="w-full bg-gray-900 text-white px-4 py-3 rounded-xl border border-gray-700 focus:outline-none focus:border-indigo-500 placeholder-gray-500 text-base resize-none"
+          className="w-full bg-zinc-900 text-white px-4 py-3 rounded-2xl border border-zinc-700 focus:outline-none focus:border-cyan-500 placeholder-zinc-500 text-[15px] resize-none"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-base font-medium flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-3.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-2xl text-[15px] font-medium flex items-center justify-center gap-2 transition-colors"
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : status === "success" ? (
             <Check className="w-5 h-5" />
           ) : (
-            <Send className="w-5 h-5" />
+            <ArrowUp className="w-5 h-5" />
           )}
           {loading
             ? "Capturing..."
@@ -144,10 +138,10 @@ export default function Capture() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
-          className="flex flex-col items-center gap-1.5 py-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-300 hover:border-indigo-500 transition-colors disabled:opacity-50"
+          className="flex flex-col items-center gap-2 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-300 hover:border-cyan-600 transition-colors disabled:opacity-30"
         >
           <Paperclip className="w-5 h-5" />
-          <span className="text-xs">File</span>
+          <span className="text-xs font-medium">File</span>
         </button>
 
         {/* Voice recording */}
@@ -189,14 +183,14 @@ export default function Capture() {
             }
           }}
           disabled={loading}
-          className={`flex flex-col items-center gap-1.5 py-3 border rounded-xl transition-colors disabled:opacity-50 ${
+          className={`flex flex-col items-center gap-2 py-4 border rounded-2xl transition-colors disabled:opacity-30 ${
             recording
-              ? "bg-red-950 border-red-500 text-red-300"
-              : "bg-gray-900 border-gray-700 text-gray-300 hover:border-indigo-500"
+              ? "bg-red-950/50 border-red-500/50 text-red-300"
+              : "bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-cyan-600"
           }`}
         >
           {recording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-          <span className="text-xs">{recording ? "Stop" : "Voice"}</span>
+          <span className="text-xs font-medium">{recording ? "Stop" : "Voice"}</span>
         </button>
 
         {/* Camera capture */}
@@ -230,16 +224,16 @@ export default function Capture() {
         <button
           onClick={() => cameraInputRef.current?.click()}
           disabled={loading}
-          className="flex flex-col items-center gap-1.5 py-3 bg-gray-900 border border-gray-700 rounded-xl text-gray-300 hover:border-indigo-500 transition-colors disabled:opacity-50"
+          className="flex flex-col items-center gap-2 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-300 hover:border-cyan-600 transition-colors disabled:opacity-30"
         >
           <Camera className="w-5 h-5" />
-          <span className="text-xs">Camera</span>
+          <span className="text-xs font-medium">Camera</span>
         </button>
       </div>
 
       {/* Recent captures */}
-      <div className="flex-1 px-4 pb-4">
-        <h2 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">
+      <div className="flex-1 px-4 pb-4 pt-4">
+        <h2 className="text-[11px] text-zinc-500 mb-2 uppercase tracking-wider font-medium">
           Recent
         </h2>
         {recent?.notes && recent.notes.length > 0 ? (
@@ -248,18 +242,18 @@ export default function Capture() {
               <Link
                 key={n.id}
                 to={`/notes/${n.id}`}
-                className="flex items-center gap-3 bg-gray-900 rounded-xl p-3 border border-gray-800"
+                className="flex items-center gap-3 bg-zinc-900 rounded-2xl p-3.5 border border-zinc-800"
               >
                 {n.source_type === "url" ? (
-                  <Globe className="w-4 h-4 text-gray-600 shrink-0" />
+                  <Globe className="w-4 h-4 text-zinc-600 shrink-0" />
                 ) : (
-                  <MessageSquare className="w-4 h-4 text-gray-600 shrink-0" />
+                  <MessageSquare className="w-4 h-4 text-zinc-600 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">
+                  <p className="text-[13px] text-white truncate">
                     {n.title || n.raw_content?.slice(0, 60) || "Untitled"}
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-[11px] text-zinc-600">
                     {formatDistanceToNow(new Date(n.created_at), {
                       addSuffix: true,
                     })}
@@ -274,7 +268,7 @@ export default function Capture() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-600 text-sm">No notes yet.</p>
+          <p className="text-zinc-600 text-sm">No notes yet.</p>
         )}
       </div>
     </div>

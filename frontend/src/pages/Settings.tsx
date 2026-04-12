@@ -251,30 +251,30 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-3xl space-y-8">
-      <h1 className="text-2xl font-bold text-white">Settings</h1>
+    <div className="space-y-8">
+      <h1 className="text-xl font-bold text-white">Settings</h1>
 
       {/* System Status */}
       {stats && (
-        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-          <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+        <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+          <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4" /> System Status
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Total Notes</span>
+              <span className="text-zinc-500">Total Notes</span>
               <p className="text-xl font-bold text-white">{stats.notes}</p>
             </div>
             <div>
-              <span className="text-gray-500">Concepts</span>
+              <span className="text-zinc-500">Concepts</span>
               <p className="text-xl font-bold text-white">{stats.concepts}</p>
             </div>
             <div>
-              <span className="text-gray-500">Connections</span>
+              <span className="text-zinc-500">Connections</span>
               <p className="text-xl font-bold text-white">{stats.connections}</p>
             </div>
             <div>
-              <span className="text-gray-500">Entities</span>
+              <span className="text-zinc-500">Entities</span>
               <p className="text-xl font-bold text-white">{stats.entities}</p>
             </div>
           </div>
@@ -282,54 +282,54 @@ export default function Settings() {
       )}
 
       {/* Agent Controls */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
           <Brain className="w-4 h-4" /> Agent Controls
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => handleAction("brief", generateBrief)}
             disabled={!!running}
-            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors disabled:opacity-50"
           >
             {running === "brief" ? (
-              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
             ) : (
-              <Newspaper className="w-4 h-4 text-gray-500" />
+              <Newspaper className="w-4 h-4 text-zinc-500" />
             )}
             <div className="text-left">
               <span className="text-sm text-white">Generate Brief</span>
-              <p className="text-xs text-gray-500">Daily digest now</p>
+              <p className="text-xs text-zinc-500">Daily digest now</p>
             </div>
           </button>
           <button
             onClick={() => handleAction("scan", triggerDeepScan)}
             disabled={!!running}
-            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors disabled:opacity-50"
           >
             {running === "scan" ? (
-              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
             ) : (
-              <Search className="w-4 h-4 text-gray-500" />
+              <Search className="w-4 h-4 text-zinc-500" />
             )}
             <div className="text-left">
               <span className="text-sm text-white">Deep Scan</span>
-              <p className="text-xs text-gray-500">Find connections</p>
+              <p className="text-xs text-zinc-500">Find connections</p>
             </div>
           </button>
           <button
             onClick={() => handleAction("taxonomy", triggerTaxonomyRebuild)}
             disabled={!!running}
-            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors disabled:opacity-50"
           >
             {running === "taxonomy" ? (
-              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
             ) : (
-              <GitBranch className="w-4 h-4 text-gray-500" />
+              <GitBranch className="w-4 h-4 text-zinc-500" />
             )}
             <div className="text-left">
               <span className="text-sm text-white">Rebuild Taxonomy</span>
-              <p className="text-xs text-gray-500">Merge & organize</p>
+              <p className="text-xs text-zinc-500">Merge & organize</p>
             </div>
           </button>
         </div>
@@ -337,19 +337,19 @@ export default function Settings() {
 
       {/* Interest Signals */}
       {interests?.interests && interests.interests.length > 0 && (
-        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-          <h2 className="text-sm font-medium text-gray-400 mb-3">
+        <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+          <h2 className="text-sm font-medium text-zinc-400 mb-3">
             Current Interests (decayed)
           </h2>
           <div className="flex flex-wrap gap-2">
             {interests.interests.slice(0, 15).map((i) => (
               <span
                 key={i.topic}
-                className="px-2 py-1 bg-gray-800 text-gray-300 rounded text-xs"
+                className="px-2 py-1 bg-surface-3 text-zinc-300 rounded text-xs"
                 style={{ opacity: Math.min(1, 0.3 + i.score * 0.7) }}
               >
                 {i.topic}{" "}
-                <span className="text-gray-600">{i.score.toFixed(1)}</span>
+                <span className="text-zinc-600">{i.score.toFixed(1)}</span>
               </span>
             ))}
           </div>
@@ -357,31 +357,31 @@ export default function Settings() {
       )}
 
       {/* AI Engine Config */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
           <Cpu className="w-4 h-4" /> AI Engine
         </h2>
 
         <div className="mb-6">
-          <h3 className="text-xs text-gray-500 mb-2">Presets</h3>
+          <h3 className="text-xs text-zinc-500 mb-2">Presets</h3>
           <div className="grid grid-cols-2 gap-2">
             {presets.map((p) => (
               <button
                 key={p.name}
                 onClick={() => handleApplyPreset(p.name)}
                 disabled={!!applying}
-                className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg text-left hover:border-indigo-500 transition-colors"
+                className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl text-left hover:border-brand-500/30 transition-colors"
               >
                 {applying === p.name ? (
-                  <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
                 ) : (
-                  <Cpu className="w-4 h-4 text-gray-500" />
+                  <Cpu className="w-4 h-4 text-zinc-500" />
                 )}
                 <div>
                   <span className="text-sm text-white capitalize">
                     {p.name}
                   </span>
-                  <p className="text-xs text-gray-500">{p.desc}</p>
+                  <p className="text-xs text-zinc-500">{p.desc}</p>
                 </div>
               </button>
             ))}
@@ -390,7 +390,7 @@ export default function Settings() {
 
         {/* API Keys */}
         <div className="mb-6">
-          <h3 className="text-xs text-gray-500 mb-2">API Keys</h3>
+          <h3 className="text-xs text-zinc-500 mb-2">API Keys</h3>
           {!editingKeys ? (
             <div>
               <div className="space-y-2 mb-3">
@@ -401,10 +401,10 @@ export default function Settings() {
                 ].map(({ key, label }) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
+                    className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5"
                   >
-                    <span className="text-sm text-gray-300">{label}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-sm text-zinc-300">{label}</span>
+                    <span className="text-xs text-zinc-500">
                       {(apiKeys as Record<string, string>)?.[key] || "Not set"}
                     </span>
                   </div>
@@ -412,7 +412,7 @@ export default function Settings() {
               </div>
               <button
                 onClick={startEditKeys}
-                className="px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors"
+                className="px-3 py-1.5 bg-surface-3 text-zinc-300 hover:text-zinc-100 border border-border-subtle hover:border-brand-500/30 rounded-lg text-sm transition-colors"
               >
                 Edit API Keys
               </button>
@@ -430,35 +430,35 @@ export default function Settings() {
                 { key: "google", label: "Google API Key", placeholder: "AIza..." },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>
-                  <label className="text-xs text-gray-400 block mb-1">{label}</label>
+                  <label className="text-xs text-zinc-400 block mb-1">{label}</label>
                   <div className="flex gap-2">
                     <input
                       type={showApiKeys[key] ? "text" : "password"}
                       value={keyDraft[key] || ""}
                       onChange={(e) => setKeyDraft((d) => ({ ...d, [key]: e.target.value }))}
                       placeholder={placeholder}
-                      className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                      className="flex-1 bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                     />
                     <button
                       onClick={() => setShowApiKeys((s) => ({ ...s, [key]: !s[key] }))}
-                      className="p-1.5 text-gray-500 hover:text-white"
+                      className="p-1.5 text-zinc-500 hover:text-zinc-100"
                     >
                       {showApiKeys[key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
               ))}
-              <p className="text-xs text-gray-600">Leave blank to keep existing key. Only non-empty fields are updated.</p>
+              <p className="text-xs text-zinc-600">Leave blank to keep existing key. Only non-empty fields are updated.</p>
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={saveApiKeys}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm transition-colors"
+                  className="px-4 py-1.5 bg-brand-500 hover:bg-brand-400 text-white rounded-lg text-sm transition-colors"
                 >
                   Save Keys
                 </button>
                 <button
                   onClick={() => setEditingKeys(false)}
-                  className="px-4 py-1.5 bg-gray-800 text-gray-400 hover:text-white border border-gray-700 rounded-lg text-sm transition-colors"
+                  className="px-4 py-1.5 bg-surface-3 text-zinc-400 hover:text-zinc-100 border border-border-subtle rounded-lg text-sm transition-colors"
                 >
                   Cancel
                 </button>
@@ -469,21 +469,21 @@ export default function Settings() {
 
         {config && (
           <div>
-            <h3 className="text-xs text-gray-500 mb-2">
+            <h3 className="text-xs text-zinc-500 mb-2">
               Current Configuration
             </h3>
             <div className="space-y-2">
               {Object.entries(config).map(([op, cfg]) => (
                 <div
                   key={op}
-                  className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
+                  className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5"
                 >
-                  <span className="text-sm text-gray-300 capitalize">{op}</span>
+                  <span className="text-sm text-zinc-300 capitalize">{op}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-zinc-500">
                       {cfg.provider}
                     </span>
-                    <span className="text-xs text-indigo-400">{cfg.model}</span>
+                    <span className="text-xs text-brand-400">{cfg.model}</span>
                     {health?.status &&
                       (health.status[op] ? (
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -500,21 +500,21 @@ export default function Settings() {
 
       {/* Agent Activity Log */}
       {activityData?.log && activityData.log.length > 0 && (
-        <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-          <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+        <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+          <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4" /> Agent Activity
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {activityData.log.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2 text-xs"
+                className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5 text-xs"
               >
                 <div className="flex items-center gap-3">
-                  <span className={statusColors[entry.status] || "text-gray-400"}>
+                  <span className={statusColors[entry.status] || "text-zinc-400"}>
                     {entry.status === "running" ? "●" : entry.status === "complete" ? "✓" : "✗"}
                   </span>
-                  <span className="text-gray-300">
+                  <span className="text-zinc-300">
                     {entry.action_type.replace("_", " ")}
                   </span>
                   {entry.error_message && (
@@ -523,7 +523,7 @@ export default function Settings() {
                     </span>
                   )}
                 </div>
-                <span className="text-gray-600 shrink-0">
+                <span className="text-zinc-600 shrink-0">
                   {formatDistanceToNow(new Date(entry.started_at), {
                     addSuffix: true,
                   })}
@@ -535,8 +535,8 @@ export default function Settings() {
       )}
 
       {/* Messaging Bridge */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
           <MessageSquare className="w-4 h-4" /> Messaging Bridge
         </h2>
 
@@ -549,14 +549,14 @@ export default function Settings() {
             return (
               <div
                 key={p}
-                className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-3"
+                className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-3"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-white capitalize">{p}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {!bridgeStatus?.configured || !configured ? (
-                    <span className="text-xs text-gray-500">Not configured</span>
+                    <span className="text-xs text-zinc-500">Not configured</span>
                   ) : connected ? (
                     <>
                       <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -577,34 +577,34 @@ export default function Settings() {
         {/* Configuration */}
         {!bridgeEditing ? (
           <div>
-            <h3 className="text-xs text-gray-500 mb-2">Configuration</h3>
+            <h3 className="text-xs text-zinc-500 mb-2">Configuration</h3>
             <div className="space-y-2 mb-4">
               {bridgeConfig?.telegram?.bot_token && (
-                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-300">Telegram Bot Token</span>
-                  <span className="text-xs text-gray-500">{bridgeConfig.telegram.bot_token}</span>
+                <div className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-zinc-300">Telegram Bot Token</span>
+                  <span className="text-xs text-zinc-500">{bridgeConfig.telegram.bot_token}</span>
                 </div>
               )}
               {bridgeConfig?.telegram?.user_id && (
-                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-300">Telegram User ID</span>
-                  <span className="text-xs text-indigo-400">{bridgeConfig.telegram.user_id}</span>
+                <div className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-zinc-300">Telegram User ID</span>
+                  <span className="text-xs text-brand-400">{bridgeConfig.telegram.user_id}</span>
                 </div>
               )}
               {bridgeConfig?.mattermost?.url && (
-                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-300">Mattermost URL</span>
-                  <span className="text-xs text-indigo-400">{bridgeConfig.mattermost.url}</span>
+                <div className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-zinc-300">Mattermost URL</span>
+                  <span className="text-xs text-brand-400">{bridgeConfig.mattermost.url}</span>
                 </div>
               )}
               {bridgeConfig?.mattermost?.bot_token && (
-                <div className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-300">Mattermost Bot Token</span>
-                  <span className="text-xs text-gray-500">{bridgeConfig.mattermost.bot_token}</span>
+                <div className="flex items-center justify-between bg-surface-3 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-zinc-300">Mattermost Bot Token</span>
+                  <span className="text-xs text-zinc-500">{bridgeConfig.mattermost.bot_token}</span>
                 </div>
               )}
               {!bridgeConfig?.telegram?.bot_token && !bridgeConfig?.mattermost?.url && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   No platforms configured. Set tokens via environment variables or click Edit to configure.
                 </p>
               )}
@@ -612,7 +612,7 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 onClick={startEditBridge}
-                className="px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors"
+                className="px-3 py-1.5 bg-surface-3 text-zinc-300 hover:text-zinc-100 border border-border-subtle hover:border-brand-500/30 rounded-lg text-sm transition-colors"
               >
                 Edit Configuration
               </button>
@@ -620,7 +620,7 @@ export default function Settings() {
                 <button
                   onClick={() => handleTestBridge("telegram")}
                   disabled={!!bridgeTesting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-3 text-zinc-300 hover:text-zinc-100 border border-border-subtle hover:border-brand-500/30 rounded-lg text-sm transition-colors disabled:opacity-50"
                 >
                   {bridgeTesting === "telegram" ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -634,7 +634,7 @@ export default function Settings() {
                 <button
                   onClick={() => handleTestBridge("mattermost")}
                   disabled={!!bridgeTesting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-300 hover:text-white border border-gray-700 hover:border-indigo-500 rounded-lg text-sm transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-3 text-zinc-300 hover:text-zinc-100 border border-border-subtle hover:border-brand-500/30 rounded-lg text-sm transition-colors disabled:opacity-50"
                 >
                   {bridgeTesting === "mattermost" ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -660,10 +660,10 @@ export default function Settings() {
         ) : (
           /* Edit mode */
           <div className="space-y-4">
-            <h3 className="text-xs text-gray-500">Telegram</h3>
+            <h3 className="text-xs text-zinc-500">Telegram</h3>
             <div className="space-y-2">
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Bot Token</label>
+                <label className="text-xs text-zinc-400 block mb-1">Bot Token</label>
                 <div className="flex gap-2">
                   <input
                     type={showTokens.tgToken ? "text" : "password"}
@@ -675,18 +675,18 @@ export default function Settings() {
                       }))
                     }
                     placeholder="123456:ABC-DEF..."
-                    className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                    className="flex-1 bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                   />
                   <button
                     onClick={() => setShowTokens((s) => ({ ...s, tgToken: !s.tgToken }))}
-                    className="p-1.5 text-gray-500 hover:text-white"
+                    className="p-1.5 text-zinc-500 hover:text-zinc-100"
                   >
                     {showTokens.tgToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">User ID (for notifications)</label>
+                <label className="text-xs text-zinc-400 block mb-1">User ID (for notifications)</label>
                 <input
                   type="text"
                   value={bridgeDraft.telegram?.user_id || ""}
@@ -697,11 +697,11 @@ export default function Settings() {
                     }))
                   }
                   placeholder="123456789"
-                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  className="w-full bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Webhook Base URL (blank for polling)</label>
+                <label className="text-xs text-zinc-400 block mb-1">Webhook Base URL (blank for polling)</label>
                 <input
                   type="text"
                   value={bridgeDraft.telegram?.webhook_base_url || ""}
@@ -712,15 +712,15 @@ export default function Settings() {
                     }))
                   }
                   placeholder="https://your-server.com"
-                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  className="w-full bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                 />
               </div>
             </div>
 
-            <h3 className="text-xs text-gray-500 pt-2">Mattermost</h3>
+            <h3 className="text-xs text-zinc-500 pt-2">Mattermost</h3>
             <div className="space-y-2">
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Server URL</label>
+                <label className="text-xs text-zinc-400 block mb-1">Server URL</label>
                 <input
                   type="text"
                   value={bridgeDraft.mattermost?.url || ""}
@@ -731,11 +731,11 @@ export default function Settings() {
                     }))
                   }
                   placeholder="https://mattermost.example.com"
-                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  className="w-full bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Bot Token</label>
+                <label className="text-xs text-zinc-400 block mb-1">Bot Token</label>
                 <div className="flex gap-2">
                   <input
                     type={showTokens.mmToken ? "text" : "password"}
@@ -747,18 +747,18 @@ export default function Settings() {
                       }))
                     }
                     placeholder="abcdefghijklmnop"
-                    className="flex-1 bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                    className="flex-1 bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                   />
                   <button
                     onClick={() => setShowTokens((s) => ({ ...s, mmToken: !s.mmToken }))}
-                    className="p-1.5 text-gray-500 hover:text-white"
+                    className="p-1.5 text-zinc-500 hover:text-zinc-100"
                   >
                     {showTokens.mmToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-400 block mb-1">Channel ID</label>
+                <label className="text-xs text-zinc-400 block mb-1">Channel ID</label>
                 <input
                   type="text"
                   value={bridgeDraft.mattermost?.channel_id || ""}
@@ -769,7 +769,7 @@ export default function Settings() {
                     }))
                   }
                   placeholder="abc123def456"
-                  className="w-full bg-gray-800 text-white px-3 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-gray-600"
+                  className="w-full bg-surface-3 text-white px-3 py-2 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] placeholder-zinc-600"
                 />
               </div>
             </div>
@@ -777,18 +777,18 @@ export default function Settings() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={saveBridgeConfig}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm transition-colors"
+                className="px-4 py-1.5 bg-brand-500 hover:bg-brand-400 text-white rounded-lg text-sm transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={() => setBridgeEditing(false)}
-                className="px-4 py-1.5 bg-gray-800 text-gray-400 hover:text-white border border-gray-700 rounded-lg text-sm transition-colors"
+                className="px-4 py-1.5 bg-surface-3 text-zinc-400 hover:text-zinc-100 border border-border-subtle rounded-lg text-sm transition-colors"
               >
                 Cancel
               </button>
             </div>
-            <p className="text-xs text-gray-500">Saving will automatically connect to configured platforms.</p>
+            <p className="text-xs text-zinc-500">Saving will automatically connect to configured platforms.</p>
           </div>
         )}
 
@@ -797,7 +797,7 @@ export default function Settings() {
           <div className="mt-5">
             <button
               onClick={() => setShowBridgeLog(!showBridgeLog)}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               {showBridgeLog ? "Hide" : "Show"} Message Log ({bridgeLog.length})
             </button>
@@ -806,7 +806,7 @@ export default function Settings() {
                 {bridgeLog.map((entry: BridgeLogEntry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-1.5 text-xs"
+                    className="flex items-center justify-between bg-surface-3 rounded-lg px-3 py-1.5 text-xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span
@@ -818,15 +818,15 @@ export default function Settings() {
                       >
                         {entry.direction === "inbound" ? "IN" : "OUT"}
                       </span>
-                      <span className="text-gray-500 uppercase">{entry.platform}</span>
+                      <span className="text-zinc-500 uppercase">{entry.platform}</span>
                       {entry.intent && (
-                        <span className="text-indigo-400">{entry.intent}</span>
+                        <span className="text-brand-400">{entry.intent}</span>
                       )}
-                      <span className="text-gray-400 truncate max-w-64">
+                      <span className="text-zinc-400 truncate max-w-64">
                         {entry.text || ""}
                       </span>
                     </div>
-                    <span className="text-gray-600 shrink-0 ml-2">
+                    <span className="text-zinc-600 shrink-0 ml-2">
                       {formatDistanceToNow(new Date(entry.created_at), {
                         addSuffix: true,
                       })}
@@ -840,25 +840,25 @@ export default function Settings() {
       </section>
 
       {/* Notification Preferences */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
           <BellRing className="w-4 h-4" /> Notification Preferences
         </h2>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-xs text-zinc-500 mb-4">
           Choose which notifications are delivered to each channel.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-gray-500">
+              <tr className="text-xs text-zinc-500">
                 <th className="text-left pb-2 pr-4">Notification</th>
                 <th className="text-center pb-2 px-4">Dashboard</th>
                 <th className="text-center pb-2 px-4">Telegram</th>
               </tr>
             </thead>
-            <tbody className="text-gray-300">
+            <tbody className="text-zinc-300">
               {(["daily_brief", "connection_alert", "resurface"] as const).map((notifType) => (
-                <tr key={notifType} className="border-t border-gray-800">
+                <tr key={notifType} className="border-t border-border-subtle">
                   <td className="py-3 pr-4 capitalize">
                     {notifType.replace("_", " ")}
                   </td>
@@ -910,11 +910,11 @@ export default function Settings() {
       </section>
 
       {/* Import */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4 flex items-center gap-2">
           <Upload className="w-4 h-4" /> Import
         </h2>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-xs text-zinc-500 mb-4">
           Import notes from other tools. Each file is processed and indexed in the background.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -925,7 +925,7 @@ export default function Settings() {
           ].map(({ format, label, accept, desc }) => (
             <label
               key={format}
-              className="flex items-center gap-3 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors cursor-pointer"
+              className="flex items-center gap-3 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors cursor-pointer"
             >
               <input
                 type="file"
@@ -938,13 +938,13 @@ export default function Settings() {
                 }}
               />
               {importLoading === format ? (
-                <Loader2 className="w-5 h-5 text-indigo-400 animate-spin shrink-0" />
+                <Loader2 className="w-5 h-5 text-brand-400 animate-spin shrink-0" />
               ) : (
-                <Upload className="w-5 h-5 text-gray-500 shrink-0" />
+                <Upload className="w-5 h-5 text-zinc-500 shrink-0" />
               )}
               <div className="text-left">
                 <span className="text-sm text-white">{label}</span>
-                <p className="text-xs text-gray-500">{desc}</p>
+                <p className="text-xs text-zinc-500">{desc}</p>
               </div>
             </label>
           ))}
@@ -957,39 +957,39 @@ export default function Settings() {
       </section>
 
       {/* Export / Backup */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4">Export & Backup</h2>
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4">Export & Backup</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <a
             href="/api/export/json"
-            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors"
+            className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors"
           >
             <div className="text-left">
               <span className="text-sm text-white">JSON Backup</span>
-              <p className="text-xs text-gray-500">Full database export</p>
+              <p className="text-xs text-zinc-500">Full database export</p>
             </div>
           </a>
           <a
             href="/api/export/markdown"
-            className="flex items-center gap-2 p-3 bg-gray-800 border border-gray-700 rounded-lg hover:border-indigo-500 transition-colors"
+            className="flex items-center gap-2 p-3 bg-surface-3 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors"
           >
             <div className="text-left">
               <span className="text-sm text-white">Markdown Archive</span>
-              <p className="text-xs text-gray-500">All notes as .md files (zip)</p>
+              <p className="text-xs text-zinc-500">All notes as .md files (zip)</p>
             </div>
           </a>
         </div>
       </section>
 
       {/* API Info */}
-      <section className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <h2 className="text-sm font-medium text-gray-400 mb-4">API</h2>
-        <p className="text-xs text-gray-500">
+      <section className="bg-surface-2 rounded-2xl border border-border-subtle p-6">
+        <h2 className="text-sm font-medium text-zinc-400 mb-4">API</h2>
+        <p className="text-xs text-zinc-500">
           API documentation available at{" "}
           <a
             href="/docs"
             target="_blank"
-            className="text-indigo-400 hover:text-indigo-300"
+            className="text-brand-400 hover:text-brand-300"
           >
             /docs
           </a>{" "}

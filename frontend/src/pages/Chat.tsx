@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Brain } from "lucide-react";
+import { ArrowUp, Loader2 } from "lucide-react";
 import { askQuestion, askWithContext, type AskResponse } from "../lib/api";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
@@ -68,20 +68,21 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-3xl">
-      <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-        <Brain className="w-6 h-6 text-indigo-400" /> Chat with Mimir
+    <div className="flex flex-col h-[calc(100vh-120px)]">
+      <h1 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <img src="/logo.png" alt="" className="w-7 h-7" />
+        Chat with Mimir
       </h1>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 mb-4">
         {messages.length === 0 && (
           <div className="text-center py-20">
-            <Brain className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-            <p className="text-gray-500 text-sm">
+            <img src="/logo.png" alt="Mimir" className="w-16 h-16 mx-auto mb-4 opacity-20" />
+            <p className="text-zinc-500 text-sm">
               Ask anything about your knowledge base.
             </p>
-            <p className="text-gray-600 text-xs mt-1">
+            <p className="text-zinc-600 text-xs mt-1">
               Mimir answers using only your captured notes.
             </p>
           </div>
@@ -92,10 +93,10 @@ export default function Chat() {
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-4 py-3 ${
+              className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-900 border border-gray-800 text-gray-200"
+                  ? "bg-brand-600 text-white"
+                  : "bg-surface-2 border border-border-subtle text-zinc-200"
               }`}
             >
               {msg.role === "assistant" ? (
@@ -103,17 +104,17 @@ export default function Chat() {
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               ) : (
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-[13px]">{msg.content}</p>
               )}
               {msg.sources && msg.sources.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-gray-700">
-                  <p className="text-xs text-gray-500 mb-1">Sources</p>
+                <div className="mt-3 pt-2 border-t border-zinc-700/50">
+                  <p className="text-[11px] text-zinc-500 mb-1.5 font-medium">Sources</p>
                   <div className="flex flex-wrap gap-1.5">
                     {msg.sources.map((s) => (
                       <Link
                         key={s.note_id}
                         to={`/notes/${s.note_id}`}
-                        className="text-xs px-2 py-0.5 bg-gray-800 text-indigo-400 hover:text-indigo-300 rounded border border-gray-700 hover:border-gray-600 transition-colors"
+                        className="text-[11px] px-2 py-0.5 bg-surface-3 text-brand-400 hover:text-brand-300 rounded-md border border-border-subtle hover:border-brand-500/30 transition-colors"
                       >
                         {s.title}
                       </Link>
@@ -126,8 +127,8 @@ export default function Chat() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-900 border border-gray-800 rounded-lg px-4 py-3">
-              <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+            <div className="bg-surface-2 border border-border-subtle rounded-2xl px-4 py-3">
+              <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
             </div>
           </div>
         )}
@@ -137,7 +138,7 @@ export default function Chat() {
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className="flex gap-2 bg-gray-900 border border-gray-800 rounded-lg p-2"
+        className="flex items-center gap-2 bg-surface-2 border border-border-subtle rounded-xl p-2"
       >
         <input
           ref={inputRef}
@@ -145,18 +146,18 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your second brain..."
-          className="flex-1 bg-transparent text-white px-3 py-2 text-sm focus:outline-none placeholder-gray-500"
+          className="flex-1 bg-transparent text-white px-3 py-2 text-[13px] focus:outline-none placeholder-zinc-500"
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-sm flex items-center gap-2 transition-colors"
+          className="p-2.5 bg-brand-500 hover:bg-brand-400 disabled:opacity-30 text-white rounded-lg transition-colors"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Send className="w-4 h-4" />
+            <ArrowUp className="w-4 h-4" />
           )}
         </button>
       </form>

@@ -38,21 +38,19 @@ export default function Browse() {
   ];
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Browse</h1>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-xl font-bold text-white">Browse</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-900 rounded-lg p-1 border border-gray-800 w-fit">
+      <div className="flex gap-1 bg-surface-2 rounded-xl p-1 border border-border-subtle w-fit">
         {tabs.map(({ key, icon: Icon, label }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
               tab === key
-                ? "bg-indigo-600 text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-brand-500 text-white shadow-sm"
+                : "text-zinc-400 hover:text-white"
             }`}
           >
             <Icon className="w-3.5 h-3.5" /> {label}
@@ -68,10 +66,10 @@ export default function Browse() {
               <button
                 key={s}
                 onClick={() => { setSort(s); setPage(0); }}
-                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   sort === s
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-900 text-gray-400 hover:text-white border border-gray-700"
+                    ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
+                    : "bg-surface-2 text-zinc-400 hover:text-white border border-border-subtle hover:border-border-hover"
                 }`}
               >
                 {s.replace("_", " ")}
@@ -84,7 +82,7 @@ export default function Browse() {
               {data.notes.map((n) => <NoteCard key={n.id} note={n} />)}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No notes found.</p>
+            <p className="text-zinc-500 text-sm">No notes found.</p>
           )}
 
           {data && data.total > limit && (
@@ -92,17 +90,17 @@ export default function Browse() {
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="px-3 py-1.5 bg-gray-900 text-gray-400 rounded-lg text-xs disabled:opacity-50 border border-gray-700"
+                className="px-4 py-2 bg-surface-2 text-zinc-400 rounded-lg text-xs disabled:opacity-30 border border-border-subtle hover:border-border-hover transition-colors"
               >
                 Previous
               </button>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500 tabular-nums">
                 Page {page + 1} of {Math.ceil(data.total / limit)}
               </span>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={(page + 1) * limit >= data.total}
-                className="px-3 py-1.5 bg-gray-900 text-gray-400 rounded-lg text-xs disabled:opacity-50 border border-gray-700"
+                className="px-4 py-2 bg-surface-2 text-zinc-400 rounded-lg text-xs disabled:opacity-30 border border-border-subtle hover:border-border-hover transition-colors"
               >
                 Next
               </button>
@@ -114,7 +112,6 @@ export default function Browse() {
       {/* Concepts tab — taxonomy tree */}
       {tab === "concepts" && concepts?.concepts && (
         <div className="space-y-4">
-          {/* Top-level concepts (no parent) */}
           {(() => {
             const topLevel = concepts.concepts.filter(
               (c) => !concepts.concepts.some((p) => p.id === (c as any).parent_id)
@@ -129,7 +126,7 @@ export default function Browse() {
             }, {});
 
             return topLevel.length > 0 ? (
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {topLevel.map((c) => (
                   <ConceptTreeNode
                     key={c.id}
@@ -145,10 +142,10 @@ export default function Browse() {
                   <Link
                     key={c.id}
                     to={`/concepts/${c.id}`}
-                    className="px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg hover:border-indigo-500 transition-colors"
+                    className="px-4 py-2.5 bg-surface-2 border border-border-subtle rounded-xl hover:border-brand-500/30 transition-colors"
                   >
-                    <span className="text-sm text-white">{c.name}</span>
-                    <span className="text-xs text-gray-600 ml-2">{c.note_count}</span>
+                    <span className="text-[13px] text-white">{c.name}</span>
+                    <span className="text-xs text-zinc-600 ml-2">{c.note_count}</span>
                   </Link>
                 ))}
               </div>
@@ -165,10 +162,10 @@ export default function Browse() {
               <button
                 key={t}
                 onClick={() => setEntityType(t)}
-                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   entityType === t
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-900 text-gray-400 hover:text-white border border-gray-700"
+                    ? "bg-brand-500/10 text-brand-400 border border-brand-500/20"
+                    : "bg-surface-2 text-zinc-400 hover:text-white border border-border-subtle hover:border-border-hover"
                 }`}
               >
                 {t || "all"}
@@ -182,18 +179,18 @@ export default function Browse() {
                 <Link
                   key={e.id}
                   to={`/entities/${e.id}`}
-                  className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-3 hover:border-gray-600 transition-colors"
+                  className="flex items-center gap-3 bg-surface-2 border border-border-subtle rounded-xl p-3.5 hover:border-brand-500/30 transition-colors group"
                 >
                   <div className="flex-1">
-                    <span className="text-sm text-white">{e.name}</span>
-                    <span className="text-xs text-gray-600 ml-2">{e.entity_type}</span>
+                    <span className="text-[13px] text-white font-medium">{e.name}</span>
+                    <span className="text-xs text-zinc-500 ml-2">{e.entity_type}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-700" />
+                  <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors" />
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No entities found.</p>
+            <p className="text-zinc-500 text-sm">No entities found.</p>
           )}
         </>
       )}
@@ -213,18 +210,18 @@ function ConceptTreeNode({
   depth?: number;
 }) {
   return (
-    <div style={{ paddingLeft: depth * 16 }}>
+    <div style={{ paddingLeft: depth * 20 }}>
       <Link
         to={`/concepts/${concept.id}`}
-        className="flex items-center gap-2 py-1.5 px-3 rounded-lg hover:bg-gray-800 transition-colors group"
+        className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-surface-3 transition-colors group"
       >
         {children.length > 0 && (
-          <ChevronRight className="w-3 h-3 text-gray-600 group-hover:text-gray-400" />
+          <ChevronRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400" />
         )}
-        <span className="text-sm text-gray-300 group-hover:text-white">
+        <span className="text-[13px] text-zinc-300 group-hover:text-white">
           {concept.name}
         </span>
-        <span className="text-xs text-gray-600">{concept.note_count}</span>
+        <span className="text-[11px] text-zinc-600 bg-surface-3 px-1.5 py-0.5 rounded">{concept.note_count}</span>
       </Link>
       {children.map((child) => (
         <ConceptTreeNode

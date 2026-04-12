@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search as SearchIcon, Loader2, MessageCircle } from "lucide-react";
+import { Search as SearchIcon, Loader2, MessageCircle, Sparkles } from "lucide-react";
 import { searchNotes, getConcepts, askQuestion, type SearchResult } from "../lib/api";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -36,7 +36,6 @@ export default function Search() {
 
   const {
     data: askResult,
-    isLoading: askLoading,
     isFetching: askFetching,
   } = useQuery({
     queryKey: ["ask", debouncedQuery],
@@ -45,46 +44,54 @@ export default function Search() {
   });
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <h1 className="text-2xl font-bold text-white">Search</h1>
+    <div className="space-y-6">
+      <h1 className="text-xl font-bold text-white">Search</h1>
 
       {/* Search input */}
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search your knowledge base..."
-          className="w-full bg-gray-900 text-white pl-10 pr-4 py-3 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 text-sm"
+          className="w-full bg-surface-2 text-white pl-12 pr-4 py-3.5 rounded-xl border border-border-subtle focus:outline-none focus:border-brand-500/50 text-[13px] transition-colors"
           autoFocus
         />
         {(isFetching || askFetching) && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 animate-spin" />
+          <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 animate-spin" />
         )}
       </div>
 
       {/* Mode toggle + Filters */}
       <div className="flex gap-2 flex-wrap items-center">
-        <div className="flex bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+        <div className="flex bg-surface-2 border border-border-subtle rounded-lg overflow-hidden">
           <button
             onClick={() => setMode("search")}
-            className={`px-3 py-1.5 text-xs transition-colors ${mode === "search" ? "bg-indigo-600 text-white" : "text-gray-400 hover:text-white"}`}
+            className={`px-4 py-2 text-xs font-medium transition-colors ${
+              mode === "search"
+                ? "bg-brand-500 text-white"
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
             Search
           </button>
           <button
             onClick={() => setMode("ask")}
-            className={`px-3 py-1.5 text-xs flex items-center gap-1 transition-colors ${mode === "ask" ? "bg-indigo-600 text-white" : "text-gray-400 hover:text-white"}`}
+            className={`px-4 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors ${
+              mode === "ask"
+                ? "bg-brand-500 text-white"
+                : "text-zinc-400 hover:text-white"
+            }`}
           >
-            <MessageCircle className="w-3 h-3" /> Ask
+            <Sparkles className="w-3 h-3" /> Ask AI
           </button>
         </div>
         {mode === "search" && (
           <select
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
-            className="bg-gray-900 text-gray-300 border border-gray-700 rounded-lg px-3 py-1.5 text-xs"
+            className="bg-surface-2 text-zinc-300 border border-border-subtle rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-brand-500/50"
           >
             <option value="">All sources</option>
             <option value="manual">Manual</option>
@@ -99,23 +106,23 @@ export default function Search() {
       {/* Ask result */}
       {mode === "ask" && askResult && (
         <div className="space-y-4">
-          <div className="bg-indigo-950/30 border border-indigo-900/50 rounded-lg p-5">
-            <p className="text-sm text-gray-200 whitespace-pre-line leading-relaxed">
+          <div className="bg-gradient-to-br from-brand-950/40 to-surface-2 border border-brand-900/30 rounded-2xl p-6">
+            <p className="text-[13px] text-zinc-200 whitespace-pre-line leading-relaxed">
               {askResult.answer}
             </p>
           </div>
           {askResult.sources.length > 0 && (
             <div>
-              <p className="text-xs text-gray-500 mb-2">Sources</p>
-              <div className="space-y-1">
+              <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-2">Sources</p>
+              <div className="space-y-1.5">
                 {askResult.sources.map((s) => (
                   <Link
                     key={s.note_id}
                     to={`/notes/${s.note_id}`}
-                    className="flex items-center justify-between bg-gray-900 rounded-lg px-3 py-2 border border-gray-800 hover:border-gray-600 text-xs"
+                    className="flex items-center justify-between bg-surface-2 rounded-xl px-4 py-2.5 border border-border-subtle hover:border-brand-500/30 text-xs transition-colors"
                   >
-                    <span className="text-gray-300">{s.title}</span>
-                    <span className="text-gray-600">{s.score.toFixed(4)}</span>
+                    <span className="text-zinc-300">{s.title}</span>
+                    <span className="text-zinc-600 tabular-nums">{s.score.toFixed(4)}</span>
                   </Link>
                 ))}
               </div>
@@ -127,7 +134,7 @@ export default function Search() {
       {/* Search Results */}
       {mode === "search" && results?.results && results.results.length > 0 ? (
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">
+          <p className="text-[11px] text-zinc-500 font-medium">
             {results.total} result{results.total !== 1 ? "s" : ""}
           </p>
           {results.results.map((r) => (
@@ -135,24 +142,24 @@ export default function Search() {
           ))}
         </div>
       ) : mode === "search" && debouncedQuery.length > 1 && !isLoading ? (
-        <p className="text-gray-500 text-sm">No results found.</p>
+        <p className="text-zinc-500 text-sm">No results found.</p>
       ) : null}
 
       {/* Concept cloud when idle */}
       {!debouncedQuery && concepts?.concepts && concepts.concepts.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-400 mb-3">
-            Concepts in your knowledge base
+          <h2 className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider mb-3">
+            Explore concepts
           </h2>
           <div className="flex flex-wrap gap-2">
             {concepts.concepts.slice(0, 30).map((c) => (
               <button
                 key={c.id}
                 onClick={() => setQuery(c.name)}
-                className="px-3 py-1 bg-gray-900 border border-gray-700 text-gray-300 rounded-full text-xs hover:border-indigo-500 hover:text-indigo-300 transition-colors"
+                className="px-3 py-1.5 bg-surface-2 border border-border-subtle text-zinc-300 rounded-full text-xs hover:border-brand-500/40 hover:text-brand-400 transition-colors"
               >
                 {c.name}{" "}
-                <span className="text-gray-600">{c.note_count}</span>
+                <span className="text-zinc-600">{c.note_count}</span>
               </button>
             ))}
           </div>
@@ -166,37 +173,37 @@ function SearchResultCard({ result }: { result: SearchResult }) {
   return (
     <Link
       to={`/notes/${result.note_id}`}
-      className="block bg-gray-900 rounded-lg border border-gray-800 p-4 hover:border-gray-600 transition-colors"
+      className="group block bg-surface-2 rounded-xl border border-border-subtle p-4 hover:border-brand-500/30 transition-all duration-150"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-medium text-white text-sm">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-medium text-white text-[13px]">
           {result.title || "Untitled"}
         </h3>
-        <span className="text-xs text-gray-600 shrink-0">
-          {result.score.toFixed(4)}
+        <span className="text-[11px] text-zinc-600 shrink-0 tabular-nums bg-surface-3 px-2 py-0.5 rounded-md">
+          {result.score.toFixed(3)}
         </span>
       </div>
       {result.synthesis && (
-        <p className="mt-1 text-gray-400 text-xs line-clamp-2">
+        <p className="mt-1.5 text-zinc-500 text-xs line-clamp-2 leading-relaxed">
           {result.synthesis}
         </p>
       )}
       {result.highlights && (
         <p
-          className="mt-1 text-gray-500 text-xs line-clamp-1"
+          className="mt-1 text-zinc-600 text-xs line-clamp-1"
           dangerouslySetInnerHTML={{ __html: result.highlights }}
         />
       )}
-      <div className="mt-2 flex items-center gap-2 flex-wrap">
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
         {result.concepts?.slice(0, 3).map((c) => (
           <span
             key={c}
-            className="px-2 py-0.5 bg-indigo-900/40 text-indigo-300 rounded text-xs"
+            className="px-2 py-0.5 bg-brand-500/10 text-brand-400 rounded-md text-[11px] font-medium"
           >
             {c}
           </span>
         ))}
-        <span className="ml-auto text-xs text-gray-600">
+        <span className="ml-auto text-[11px] text-zinc-600">
           {result.created_at &&
             formatDistanceToNow(new Date(result.created_at), {
               addSuffix: true,

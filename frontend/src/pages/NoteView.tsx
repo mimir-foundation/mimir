@@ -17,6 +17,7 @@ import {
   CheckSquare,
   UserPlus,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
 
 export default function NoteView() {
@@ -31,10 +32,14 @@ export default function NoteView() {
   });
 
   if (isLoading) {
-    return <div className="text-gray-500">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
+      </div>
+    );
   }
   if (!note) {
-    return <div className="text-gray-500">Note not found</div>;
+    return <div className="text-zinc-500 py-20 text-center">Note not found</div>;
   }
 
   async function toggleStar() {
@@ -54,48 +59,48 @@ export default function NoteView() {
   }
 
   const connectionTypeColors: Record<string, string> = {
-    related: "bg-blue-900/40 text-blue-300",
-    builds_on: "bg-emerald-900/40 text-emerald-300",
-    contradicts: "bg-red-900/40 text-red-300",
-    supports: "bg-teal-900/40 text-teal-300",
-    inspired_by: "bg-purple-900/40 text-purple-300",
+    related: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    builds_on: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    contradicts: "bg-red-500/10 text-red-400 border-red-500/20",
+    supports: "bg-teal-500/10 text-teal-400 border-teal-500/20",
+    inspired_by: "bg-violet-500/10 text-violet-400 border-violet-500/20",
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-800 rounded-lg text-gray-400"
+          className="p-2 hover:bg-surface-3 rounded-lg text-zinc-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <h1 className="text-xl font-bold text-white flex-1 truncate">
+        <h1 className="text-lg font-bold text-white flex-1 truncate">
           {note.title || "Untitled"}
         </h1>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={toggleStar}
-            className="p-2 hover:bg-gray-800 rounded-lg"
+            className="p-2 hover:bg-surface-3 rounded-lg transition-colors"
           >
             <Star
               className={`w-4 h-4 ${
                 note.is_starred
                   ? "text-amber-400 fill-amber-400"
-                  : "text-gray-500"
+                  : "text-zinc-500 hover:text-zinc-300"
               }`}
             />
           </button>
           <button
             onClick={toggleArchive}
-            className="p-2 hover:bg-gray-800 rounded-lg text-gray-500"
+            className="p-2 hover:bg-surface-3 rounded-lg text-zinc-500 hover:text-zinc-300 transition-colors"
           >
             <Archive className="w-4 h-4" />
           </button>
           <button
             onClick={handleDelete}
-            className="p-2 hover:bg-gray-800 rounded-lg text-gray-500 hover:text-red-400"
+            className="p-2 hover:bg-surface-3 rounded-lg text-zinc-500 hover:text-red-400 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -103,18 +108,18 @@ export default function NoteView() {
       </div>
 
       {/* Meta */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
+      <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
+        <span className="flex items-center gap-1.5">
           <Clock className="w-3 h-3" />
           {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
         </span>
         {note.word_count && (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5">
             <BookOpen className="w-3 h-3" />
             {note.word_count} words
           </span>
         )}
-        <span className="px-2 py-0.5 bg-gray-800 rounded text-gray-400">
+        <span className="px-2 py-0.5 bg-surface-3 rounded-md text-zinc-400 border border-border-subtle text-[11px]">
           {note.source_type}
         </span>
         {note.source_uri && (
@@ -122,7 +127,7 @@ export default function NoteView() {
             href={note.source_uri}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
+            className="flex items-center gap-1 text-brand-400 hover:text-brand-300 transition-colors"
           >
             <ExternalLink className="w-3 h-3" /> Source
           </a>
@@ -131,34 +136,38 @@ export default function NoteView() {
 
       {/* Synthesis */}
       {note.synthesis && (
-        <div className="bg-indigo-950/30 border border-indigo-900/50 rounded-lg p-4">
-          <p className="text-sm text-indigo-200">{note.synthesis}</p>
+        <div className="bg-gradient-to-br from-brand-950/40 to-surface-2 border border-brand-900/30 rounded-2xl p-5">
+          <p className="text-[13px] text-brand-200 leading-relaxed">{note.synthesis}</p>
         </div>
       )}
 
       {/* Concepts & Entities */}
-      <div className="flex flex-wrap gap-2">
-        {note.concepts?.map((c: any) => (
-          <span
-            key={c.id || c.name}
-            className="px-2 py-1 bg-indigo-900/40 text-indigo-300 rounded text-xs"
-          >
-            {c.name || c}
-          </span>
-        ))}
-        {note.entities?.map((e) => (
-          <span
-            key={e.id}
-            className="px-2 py-1 bg-gray-800 text-gray-300 rounded text-xs"
-          >
-            {e.name}
-            <span className="text-gray-600 ml-1">{e.entity_type}</span>
-          </span>
-        ))}
-      </div>
+      {((note.concepts && note.concepts.length > 0) || (note.entities && note.entities.length > 0)) && (
+        <div className="flex flex-wrap gap-2">
+          {note.concepts?.map((c: any) => (
+            <Link
+              key={c.id || c.name}
+              to={c.id ? `/concepts/${c.id}` : "#"}
+              className="px-2.5 py-1 bg-brand-500/10 text-brand-400 rounded-lg text-[11px] font-medium border border-brand-500/10 hover:border-brand-500/30 transition-colors"
+            >
+              {c.name || c}
+            </Link>
+          ))}
+          {note.entities?.map((e) => (
+            <Link
+              key={e.id}
+              to={`/entities/${e.id}`}
+              className="px-2.5 py-1 bg-surface-3 text-zinc-300 rounded-lg text-[11px] font-medium border border-border-subtle hover:border-border-hover transition-colors"
+            >
+              {e.name}
+              <span className="text-zinc-600 ml-1">{e.entity_type}</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
-      <div className="bg-gray-900 rounded-lg border border-gray-800 p-6 prose prose-invert prose-sm max-w-none">
+      <div className="bg-surface-2 rounded-2xl border border-border-subtle p-6 prose prose-invert prose-sm max-w-none">
         <ReactMarkdown>
           {note.processed_content || note.raw_content}
         </ReactMarkdown>
@@ -167,8 +176,8 @@ export default function NoteView() {
       {/* Actions */}
       {(note as any).actions && (note as any).actions.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-            <CalendarPlus className="w-4 h-4" /> Actions
+          <h2 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <CalendarPlus className="w-3.5 h-3.5" /> Actions
           </h2>
           <div className="space-y-2">
             {(note as any).actions.map((a: any) => {
@@ -183,30 +192,24 @@ export default function NoteView() {
               const Icon = icons[a.action_type] || CalendarPlus;
               const statusColors: Record<string, string> = {
                 dispatched: "text-emerald-400",
-                pending: "text-blue-400",
+                pending: "text-brand-400",
                 pending_confirmation: "text-amber-400",
                 failed: "text-red-400",
-                skipped: "text-gray-500",
+                skipped: "text-zinc-500",
               };
               return (
                 <div
                   key={a.id}
-                  className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-3"
+                  className="flex items-center gap-3 bg-surface-2 border border-border-subtle rounded-xl p-3.5"
                 >
-                  <Icon className={`w-4 h-4 ${statusColors[a.status] || "text-gray-400"}`} />
+                  <Icon className={`w-4 h-4 ${statusColors[a.status] || "text-zinc-400"}`} />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-white">{payload.title || a.action_type}</span>
+                    <span className="text-[13px] text-white">{payload.title || a.action_type}</span>
                     {payload.start && (
-                      <span className="text-xs text-gray-500 ml-2">{payload.start}</span>
-                    )}
-                    {payload.location && (
-                      <span className="text-xs text-gray-500 ml-2">{payload.location}</span>
-                    )}
-                    {payload.recurring && (
-                      <span className="text-xs text-amber-400 ml-2">Recurring: {payload.recurring}</span>
+                      <span className="text-xs text-zinc-500 ml-2">{payload.start}</span>
                     )}
                   </div>
-                  <span className={`text-xs ${statusColors[a.status] || "text-gray-500"}`}>
+                  <span className={`text-[11px] ${statusColors[a.status] || "text-zinc-500"}`}>
                     {a.status.replace("_", " ")}
                   </span>
                 </div>
@@ -219,35 +222,35 @@ export default function NoteView() {
       {/* Connections */}
       {note.connections && note.connections.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-            <Link2 className="w-4 h-4" /> Connections
+          <h2 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Link2 className="w-3.5 h-3.5" /> Connections ({note.connections.length})
           </h2>
           <div className="space-y-2">
             {note.connections.map((c) => (
               <Link
                 key={c.id}
                 to={`/notes/${c.target_note_id}`}
-                className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-3 hover:border-gray-600 transition-colors"
+                className="flex items-center gap-3 bg-surface-2 border border-border-subtle rounded-xl p-3.5 hover:border-brand-500/30 transition-colors group"
               >
                 <span
-                  className={`px-2 py-0.5 rounded text-xs ${
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${
                     connectionTypeColors[c.connection_type] ||
-                    "bg-gray-800 text-gray-400"
+                    "bg-surface-3 text-zinc-400 border-border-subtle"
                   }`}
                 >
                   {c.connection_type}
                 </span>
-                <span className="text-sm text-white flex-1 truncate">
+                <span className="text-[13px] text-white flex-1 truncate">
                   {c.target_title || "Untitled"}
                 </span>
-                <div className="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div className="w-16 h-1.5 bg-surface-4 rounded-full overflow-hidden shrink-0">
                   <div
-                    className="h-full bg-indigo-500 rounded-full"
+                    className="h-full bg-brand-500 rounded-full"
                     style={{ width: `${c.strength * 100}%` }}
                   />
                 </div>
                 {c.explanation && (
-                  <span className="text-xs text-gray-500 max-w-48 truncate">
+                  <span className="text-[11px] text-zinc-500 max-w-48 truncate hidden sm:block">
                     {c.explanation}
                   </span>
                 )}
