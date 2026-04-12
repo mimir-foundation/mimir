@@ -289,6 +289,38 @@ async def update_bridge_config(request: Request):
         return {"status": "saved", "error": str(e), "note": "Config saved but reload failed. Try restarting."}
 
 
+@management_router.patch("/config")
+async def patch_bridge_config(request: Request):
+    """Partially update bridge settings (deep merge). Does NOT reload the bridge.
+
+    Use this for updating outbound_channels, security, etc. without
+    overwriting tokens or triggering a reconnect.
+    """
+    body = await request.json()
+
+    # Load existing config
+    row = await db.fetch_one("SELECT value FROM settings WHERE key = 'bridge'")
+    existing = {}
+    if row:
+        try:
+            existing = json.loads(row["value"])
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Deep merge: only update keys present in body
+    for k, v in body.items():
+        if isinstance(v, dict) and isinstance(existing.get(k), dict):
+            existing[k].update(v)
+        else:
+            existing[k] = v
+
+    await db.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+        ("bridge", json.dumps(existing)),
+    )
+    return {"status": "saved"}
+
+
 @management_router.post("/test/{platform}")
 async def test_bridge(platform: str):
     """Send a test message to the specified platform."""

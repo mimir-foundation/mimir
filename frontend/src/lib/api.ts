@@ -282,6 +282,13 @@ export function getBridgeConfig() {
   return request<BridgeConfig>("/bridge/config");
 }
 
+export function patchBridgeConfig(partial: Partial<BridgeConfig>) {
+  return request<{ status: string }>("/bridge/config", {
+    method: "PATCH",
+    body: JSON.stringify(partial),
+  });
+}
+
 export function updateBridgeConfig(config: BridgeConfig) {
   return request<{ status: string; platforms?: string[]; error?: string }>("/bridge/config", {
     method: "PUT",
