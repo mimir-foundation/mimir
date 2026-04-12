@@ -111,10 +111,11 @@ ok "Models ready: nomic-embed-text, gemma3"
 # ── Install CLI ──────────────────────────────────────────────────────────────
 
 VENV_DIR="$INSTALL_DIR/.venv"
+CLI_OK=false
 
 info "Installing mimir CLI..."
 
-# Ensure python3 + venv are available
+# Find python3
 PYTHON=""
 for py in python3 python; do
     if command -v "$py" &>/dev/null; then
@@ -124,31 +125,54 @@ for py in python3 python; do
 done
 
 if [ -z "$PYTHON" ]; then
-    warn "Python not found — install the CLI manually:"
-    echo -e "  ${dim}  python3 -m venv $VENV_DIR && $VENV_DIR/bin/pip install -e $INSTALL_DIR/tui${reset}"
-else
-    # Create venv if it doesn't exist
+    warn "Python 3 not found"
+elif ! "$PYTHON" -c "import sys; assert sys.version_info >= (3,12)" 2>/dev/null; then
+    warn "Python 3.12+ required (found: $($PYTHON --version 2>&1))"
+    PYTHON=""
+fi
+
+if [ -n "$PYTHON" ]; then
+    # Ensure python3-venv is available
     if [ ! -d "$VENV_DIR" ]; then
-        if ! "$PYTHON" -m venv "$VENV_DIR" 2>/dev/null; then
+        if ! "$PYTHON" -m venv "$VENV_DIR" 2>&1; then
             info "Installing python3-venv..."
-            apt-get update -qq && apt-get install -y -qq python3-venv >/dev/null 2>&1 || true
-            "$PYTHON" -m venv "$VENV_DIR" || fail "Cannot create Python venv — install python3-venv"
+            PY_VER=$("$PYTHON" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+            if command -v apt-get &>/dev/null; then
+                apt-get update -qq >/dev/null 2>&1
+                apt-get install -y -qq "python${PY_VER}-venv" >/dev/null 2>&1 || \
+                apt-get install -y -qq python3-venv >/dev/null 2>&1 || true
+            fi
+            if ! "$PYTHON" -m venv "$VENV_DIR" 2>&1; then
+                warn "Cannot create venv — install python${PY_VER}-venv"
+            fi
         fi
     fi
 
-    "$VENV_DIR/bin/pip" install -q -e "$INSTALL_DIR/tui"
-    ok "CLI installed to $VENV_DIR"
+    if [ -d "$VENV_DIR" ]; then
+        if "$VENV_DIR/bin/pip" install -q -e "$INSTALL_DIR/tui" 2>&1; then
+            ok "CLI installed to $VENV_DIR"
+            ln -sf "$VENV_DIR/bin/mimir" /usr/local/bin/mimir 2>/dev/null || \
+            ln -sf "$VENV_DIR/bin/mimir" "$HOME/.local/bin/mimir" 2>/dev/null || true
 
-    # Symlink mimir into /usr/local/bin so it's on PATH
-    ln -sf "$VENV_DIR/bin/mimir" /usr/local/bin/mimir 2>/dev/null || \
-    ln -sf "$VENV_DIR/bin/mimir" "$HOME/.local/bin/mimir" 2>/dev/null || true
-
-    if command -v mimir &>/dev/null; then
-        ok "mimir command is ready"
-    else
-        warn "Add to your PATH:"
-        echo -e "  ${dim}  export PATH=\"$VENV_DIR/bin:\$PATH\"${reset}"
+            if command -v mimir &>/dev/null; then
+                ok "mimir command is ready"
+                CLI_OK=true
+            else
+                warn "Symlink failed — run directly:"
+                echo -e "  ${dim}  $VENV_DIR/bin/mimir${reset}"
+            fi
+        else
+            warn "pip install failed"
+        fi
     fi
+fi
+
+if [ "$CLI_OK" = false ]; then
+    echo ""
+    warn "CLI not installed. You can install manually:"
+    echo -e "  ${dim}  $PYTHON -m venv $VENV_DIR${reset}"
+    echo -e "  ${dim}  $VENV_DIR/bin/pip install -e $INSTALL_DIR/tui${reset}"
+    echo -e "  ${dim}  ln -s $VENV_DIR/bin/mimir /usr/local/bin/mimir${reset}"
 fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
