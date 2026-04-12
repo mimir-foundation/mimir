@@ -60,6 +60,10 @@ def main(ctx, url_override, api_key, as_json):
     ctx.obj["as_json"] = as_json
 
     if ctx.invoked_subcommand is None:
+        from mimir_tui.welcome import is_first_run, welcome
+        if is_first_run():
+            welcome()
+            return
         from mimir_tui.app import MimirApp
         app = MimirApp(url_override=url_override, api_key_override=api_key)
         app.run()
