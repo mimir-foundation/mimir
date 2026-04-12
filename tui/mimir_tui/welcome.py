@@ -193,9 +193,15 @@ def _telegram(console: Console, base_url: str, api_key: str | None):
         console.print()
         console.print("  [green]>[/green] Telegram configured!")
         console.print(f"  [dim]Send a message to @{username} to try it out.[/dim]")
-    except Exception:
+    except httpx.HTTPStatusError as exc:
         console.print()
-        console.print("  [yellow]![/yellow] Couldn't save bridge config to backend")
+        console.print(f"  [yellow]![/yellow] Backend returned {exc.response.status_code}")
+        if exc.response.status_code == 401:
+            console.print("  [dim]API key mismatch — try: docker compose restart mimir-backend[/dim]")
+        console.print("  [dim]You can configure it later with: mimir setup[/dim]")
+    except Exception as exc:
+        console.print()
+        console.print(f"  [yellow]![/yellow] Couldn't save bridge config: {exc}")
         console.print("  [dim]You can configure it later with: mimir setup[/dim]")
 
     console.print()
