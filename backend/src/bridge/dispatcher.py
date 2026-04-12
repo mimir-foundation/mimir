@@ -100,6 +100,9 @@ class OutboundDispatcher:
                 if len(parts) == 2:
                     targets.append((parts[0], parts[1]))
 
+        # Skip non-platform targets (e.g. "dashboard") that aren't sendable
+        targets = [(p, r) for p, r in targets if p in self._adapters]
+
         # Fallback: if no explicit targets, use platform user_id from config
         if not targets:
             for platform_name in (Platform.TELEGRAM, Platform.MATTERMOST):
@@ -107,6 +110,15 @@ class OutboundDispatcher:
                 uid = pcfg.get("user_id") or pcfg.get("channel_id")
                 if uid and platform_name in self._adapters:
                     targets.append((platform_name, uid))
+
+        # Final fallback: check env vars directly
+        if not targets:
+            from src.config import get_settings
+            settings = get_settings()
+            if settings.telegram_user_id and Platform.TELEGRAM in self._adapters:
+                targets.append((Platform.TELEGRAM, settings.telegram_user_id))
+            if settings.mattermost_channel_id and Platform.MATTERMOST in self._adapters:
+                targets.append((Platform.MATTERMOST, settings.mattermost_channel_id))
 
         return targets
 

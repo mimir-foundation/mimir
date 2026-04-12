@@ -100,7 +100,8 @@ class MessageHandler:
             return await self._handle_status()
 
         if intent == Intent.DAILY_BRIEF:
-            return await self._handle_brief()
+            subcommand = strip_command(text, ["/brief ", "/today "])
+            return await self._handle_brief(subcommand)
 
         if intent == Intent.RECENT:
             return await self._handle_recent()
@@ -296,12 +297,18 @@ class MessageHandler:
             source_text = f"\n\n_Sources: {', '.join(titles)}_"
         return f"{answer}{source_text}"
 
-    async def _handle_brief(self) -> str:
-        from src.agent.daily_brief import get_latest_brief
+    async def _handle_brief(self, subcommand: str = "") -> str:
+        if subcommand.strip().lower() == "generate":
+            from src.agent.daily_brief import generate_brief
+            brief = await generate_brief(self.harness)
+            if not brief:
+                return "Failed to generate brief."
+            return f"**Fresh Daily Brief**\n\n{brief['content']}"
 
+        from src.agent.daily_brief import get_latest_brief
         brief = await get_latest_brief()
         if not brief:
-            return "No daily brief available yet."
+            return "No daily brief available yet. Try `/brief generate` to create one."
         return brief["content"]
 
     async def _handle_recent(self) -> str:
