@@ -214,6 +214,15 @@ if [ -n "$LLM_MODEL" ]; then
     else
         sed -i "s/^LLM_MODEL=.*/LLM_MODEL=$LLM_MODEL/" .env
     fi
+
+    # Restart backend so it picks up the new model
+    info "Restarting backend with $LLM_MODEL..."
+    if docker compose version &>/dev/null 2>&1; then
+        docker compose up -d mimir-backend 2>&1 | tail -1
+    else
+        docker-compose up -d mimir-backend 2>&1 | tail -1
+    fi
+    ok "Backend restarted"
 else
     ok "Keeping $has_llm"
 fi
