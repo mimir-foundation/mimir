@@ -85,12 +85,14 @@ fi
 
 # ── Start containers ─────────────────────────────────────────────────────────
 
-info "Starting containers (this may take a few minutes on first run)..."
+info "Pulling latest images..."
 
 if docker compose version &>/dev/null 2>&1; then
-    docker compose up -d --build --quiet-pull 2>&1 | tail -1
+    docker compose pull -q
+    docker compose up -d --build 2>&1 | tail -1
 else
-    docker-compose up -d --build --quiet-pull 2>&1 | tail -1
+    docker-compose pull -q
+    docker-compose up -d --build 2>&1 | tail -1
 fi
 
 ok "Containers started"
