@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     ports:
       - "3081:80"
+    environment:
+      - MIMIR_API_KEY=${API_KEY:-}
     depends_on:
       mimir-backend:
         condition: service_started
