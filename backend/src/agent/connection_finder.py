@@ -74,7 +74,8 @@ async def deep_scan(harness, vector_store) -> dict:
 
             # Get embeddings for this note
             note_chunks = vector_store.get_note_chunks(note["id"])
-            if not note_chunks["ids"] or not note_chunks.get("embeddings"):
+            embeddings = note_chunks.get("embeddings")
+            if not note_chunks["ids"] or embeddings is None or len(embeddings) == 0:
                 continue
 
             # Search for neighbors using first chunk
