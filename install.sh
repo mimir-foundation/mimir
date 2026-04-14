@@ -142,7 +142,7 @@ fi
 
 # Check which LLM models are present
 has_llm=""
-for m in gemma4 gemma4:27b gemma4:12b gemma4:4b gemma4:1b; do
+for m in gemma4 gemma4:e4b gemma4:e2b gemma4:26b gemma4:31b; do
     if docker exec mimir-ollama ollama list 2>/dev/null | grep -q "^${m}"; then
         has_llm="$m"
         break
@@ -171,11 +171,10 @@ fi
 
 echo ""
 echo -e "  ${bold}Available Gemma 4 models:${reset}"
-echo -e "    ${bold}1)${reset} gemma4        ${dim}— default, balanced${reset}"
-echo -e "    ${bold}2)${reset} gemma4:27b    ${dim}— largest, best quality${reset}"
-echo -e "    ${bold}3)${reset} gemma4:12b    ${dim}— mid-range${reset}"
-echo -e "    ${bold}4)${reset} gemma4:4b     ${dim}— lightweight, fast${reset}"
-echo -e "    ${bold}5)${reset} gemma4:1b     ${dim}— phone/edge, fastest${reset}"
+echo -e "    ${bold}1)${reset} gemma4        ${dim}— 9.6 GB, default balanced (e4b)${reset}"
+echo -e "    ${bold}2)${reset} gemma4:e2b    ${dim}— 7.2 GB, smallest, fast${reset}"
+echo -e "    ${bold}3)${reset} gemma4:26b    ${dim}— 18 GB, MoE, high quality${reset}"
+echo -e "    ${bold}4)${reset} gemma4:31b    ${dim}— 20 GB, dense, best quality${reset}"
 if [ -n "$has_llm" ]; then
     echo -e "    ${bold}s)${reset} skip          ${dim}— keep ${has_llm}${reset}"
 fi
@@ -183,17 +182,16 @@ echo ""
 
 while true; do
     if [ -n "$has_llm" ]; then
-        printf "  Pick a model [1-5, s to skip]: "
+        printf "  Pick a model [1-4, s to skip]: "
     else
-        printf "  Pick a model [1-5]: "
+        printf "  Pick a model [1-4]: "
     fi
     read -r choice <&3 2>/dev/null || read -r choice
     case "$choice" in
         1) LLM_MODEL="gemma4"; break ;;
-        2) LLM_MODEL="gemma4:27b"; break ;;
-        3) LLM_MODEL="gemma4:12b"; break ;;
-        4) LLM_MODEL="gemma4:4b"; break ;;
-        5) LLM_MODEL="gemma4:1b"; break ;;
+        2) LLM_MODEL="gemma4:e2b"; break ;;
+        3) LLM_MODEL="gemma4:26b"; break ;;
+        4) LLM_MODEL="gemma4:31b"; break ;;
         s|S)
             if [ -n "$has_llm" ]; then
                 LLM_MODEL=""; break

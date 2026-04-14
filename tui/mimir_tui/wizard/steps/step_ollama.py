@@ -8,11 +8,10 @@ import httpx
 
 
 GEMMA4_MODELS = [
-    ("gemma4 (default, balanced)", "gemma4"),
-    ("gemma4:27b (largest, best quality)", "gemma4:27b"),
-    ("gemma4:12b (mid-range)", "gemma4:12b"),
-    ("gemma4:4b (lightweight, fast)", "gemma4:4b"),
-    ("gemma4:1b (phone/edge, fastest)", "gemma4:1b"),
+    ("gemma4 — 9.6 GB, default balanced (e4b)", "gemma4"),
+    ("gemma4:e2b — 7.2 GB, smallest, fast", "gemma4:e2b"),
+    ("gemma4:26b — 18 GB, MoE, high quality", "gemma4:26b"),
+    ("gemma4:31b — 20 GB, dense, best quality", "gemma4:31b"),
 ]
 
 
