@@ -2,7 +2,10 @@
 set -euo pipefail
 
 # ── Mimir Installer ─────────────────────────────────────────────────────────
-#   curl -sSL https://raw.githubusercontent.com/mimir-foundation/mimir/main/install.sh | bash
+#   bash <(curl -sSL https://raw.githubusercontent.com/mimir-foundation/mimir/main/install.sh)
+
+# When piped via curl, stdin is the script itself. Reopen /dev/tty for user input.
+exec 3</dev/tty 2>/dev/null || true
 # ─────────────────────────────────────────────────────────────────────────────
 
 REPO="https://github.com/mimir-foundation/mimir.git"
@@ -92,11 +95,41 @@ fi
 
 ok "Containers started"
 
-# ── Pull Ollama models ───────────────────────────────────────────────────────
+# ── Ollama models ────────────────────────────────────────────────────────────
 
-info "Pulling AI models (this may take a while)..."
+# Progress bar for model pulls
+pull_model() {
+    local model="$1"
+    local bar_width=40
 
-# Wait for Ollama to be healthy
+    docker exec mimir-ollama ollama pull "$model" 2>&1 | while IFS= read -r line; do
+        # Try to parse JSON progress from ollama
+        if echo "$line" | grep -q '"total"'; then
+            completed=$(echo "$line" | sed -n 's/.*"completed":\([0-9]*\).*/\1/p')
+            total=$(echo "$line" | sed -n 's/.*"total":\([0-9]*\).*/\1/p')
+            if [ -n "$total" ] && [ "$total" -gt 0 ] 2>/dev/null; then
+                pct=$((completed * 100 / total))
+                filled=$((pct * bar_width / 100))
+                empty=$((bar_width - filled))
+                bar=$(printf '%0.s█' $(seq 1 $filled 2>/dev/null) 2>/dev/null)
+                space=$(printf '%0.s░' $(seq 1 $empty 2>/dev/null) 2>/dev/null)
+                printf "\r  ${cyan}${bar}${dim}${space}${reset} %3d%%" "$pct"
+            fi
+        elif echo "$line" | grep -q '"status"'; then
+            status=$(echo "$line" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')
+            case "$status" in
+                success)
+                    printf "\r  %-${bar_width}s      \n" ""
+                    ;;
+                *verifying*|*writing*)
+                    printf "\r  ${dim}%-50s${reset}" "$status"
+                    ;;
+            esac
+        fi
+    done
+}
+
+info "Waiting for Ollama..."
 for i in $(seq 1 30); do
     if docker exec mimir-ollama ollama list &>/dev/null 2>&1; then
         break
@@ -104,9 +137,109 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
-docker exec mimir-ollama ollama pull nomic-embed-text 2>&1 | tail -1
-docker exec mimir-ollama ollama pull gemma4 2>&1 | tail -1
-ok "Models ready: nomic-embed-text, gemma4"
+if ! docker exec mimir-ollama ollama list &>/dev/null 2>&1; then
+    fail "Ollama container is not responding"
+fi
+
+# Show what's already installed
+echo ""
+echo -e "  ${bold}Installed models:${reset}"
+installed=$(docker exec mimir-ollama ollama list 2>/dev/null | tail -n +2)
+if [ -n "$installed" ]; then
+    echo "$installed" | while IFS= read -r line; do
+        name=$(echo "$line" | awk '{print $1}')
+        size=$(echo "$line" | awk '{print $3, $4}')
+        echo -e "    ${green}>${reset} $name ${dim}($size)${reset}"
+    done
+else
+    echo -e "    ${dim}(none)${reset}"
+fi
+
+# Check if embedding model is present
+has_embed=false
+if docker exec mimir-ollama ollama list 2>/dev/null | grep -q "nomic-embed-text"; then
+    has_embed=true
+fi
+
+# Check which LLM models are present
+has_llm=""
+for m in gemma4 gemma4:27b gemma4:12b gemma4:4b gemma4:1b; do
+    if docker exec mimir-ollama ollama list 2>/dev/null | grep -q "^${m}"; then
+        has_llm="$m"
+        break
+    fi
+done
+
+# ── Embedding model ──
+echo ""
+if [ "$has_embed" = true ]; then
+    ok "Embedding model (nomic-embed-text) already installed"
+else
+    info "Pulling embedding model: nomic-embed-text"
+    pull_model "nomic-embed-text"
+    ok "nomic-embed-text ready"
+fi
+
+# ── LLM model selection ──
+echo ""
+if [ -n "$has_llm" ]; then
+    echo -e "  ${green}>${reset} LLM model found: ${bold}$has_llm${reset}"
+    echo ""
+    echo -e "  ${dim}You can keep this or pick a different Gemma 4 variant.${reset}"
+else
+    echo -e "  ${dim}No LLM model found. Pick a Gemma 4 variant to download.${reset}"
+fi
+
+echo ""
+echo -e "  ${bold}Available Gemma 4 models:${reset}"
+echo -e "    ${bold}1)${reset} gemma4        ${dim}— default, balanced${reset}"
+echo -e "    ${bold}2)${reset} gemma4:27b    ${dim}— largest, best quality${reset}"
+echo -e "    ${bold}3)${reset} gemma4:12b    ${dim}— mid-range${reset}"
+echo -e "    ${bold}4)${reset} gemma4:4b     ${dim}— lightweight, fast${reset}"
+echo -e "    ${bold}5)${reset} gemma4:1b     ${dim}— phone/edge, fastest${reset}"
+if [ -n "$has_llm" ]; then
+    echo -e "    ${bold}s)${reset} skip          ${dim}— keep ${has_llm}${reset}"
+fi
+echo ""
+
+while true; do
+    if [ -n "$has_llm" ]; then
+        printf "  Pick a model [1-5, s to skip]: "
+    else
+        printf "  Pick a model [1-5]: "
+    fi
+    read -r choice <&3 2>/dev/null || read -r choice
+    case "$choice" in
+        1) LLM_MODEL="gemma4"; break ;;
+        2) LLM_MODEL="gemma4:27b"; break ;;
+        3) LLM_MODEL="gemma4:12b"; break ;;
+        4) LLM_MODEL="gemma4:4b"; break ;;
+        5) LLM_MODEL="gemma4:1b"; break ;;
+        s|S)
+            if [ -n "$has_llm" ]; then
+                LLM_MODEL=""; break
+            fi
+            ;;
+        "") LLM_MODEL="gemma4"; break ;;
+        *) echo -e "  ${dim}Invalid choice${reset}" ;;
+    esac
+done
+
+if [ -n "$LLM_MODEL" ]; then
+    echo ""
+    info "Pulling $LLM_MODEL..."
+    pull_model "$LLM_MODEL"
+    ok "$LLM_MODEL ready"
+
+    # Update .env with chosen model
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/^LLM_MODEL=.*/LLM_MODEL=$LLM_MODEL/" .env
+    else
+        sed -i "s/^LLM_MODEL=.*/LLM_MODEL=$LLM_MODEL/" .env
+    fi
+else
+    ok "Keeping $has_llm"
+fi
 
 # ── Install CLI ──────────────────────────────────────────────────────────────
 
