@@ -97,36 +97,15 @@ ok "Containers started"
 
 # ── Ollama models ────────────────────────────────────────────────────────────
 
-# Progress bar for model pulls
+# Pull a model with live progress display
 pull_model() {
     local model="$1"
-    local bar_width=40
-
-    docker exec mimir-ollama ollama pull "$model" 2>&1 | while IFS= read -r line; do
-        # Try to parse JSON progress from ollama
-        if echo "$line" | grep -q '"total"'; then
-            completed=$(echo "$line" | sed -n 's/.*"completed":\([0-9]*\).*/\1/p')
-            total=$(echo "$line" | sed -n 's/.*"total":\([0-9]*\).*/\1/p')
-            if [ -n "$total" ] && [ "$total" -gt 0 ] 2>/dev/null; then
-                pct=$((completed * 100 / total))
-                filled=$((pct * bar_width / 100))
-                empty=$((bar_width - filled))
-                bar=$(printf '%0.s█' $(seq 1 $filled 2>/dev/null) 2>/dev/null)
-                space=$(printf '%0.s░' $(seq 1 $empty 2>/dev/null) 2>/dev/null)
-                printf "\r  ${cyan}${bar}${dim}${space}${reset} %3d%%" "$pct"
-            fi
-        elif echo "$line" | grep -q '"status"'; then
-            status=$(echo "$line" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')
-            case "$status" in
-                success)
-                    printf "\r  %-${bar_width}s      \n" ""
-                    ;;
-                *verifying*|*writing*)
-                    printf "\r  ${dim}%-50s${reset}" "$status"
-                    ;;
-            esac
-        fi
-    done
+    # Run pull and show output directly — ollama already renders progress
+    # Use script -q to preserve carriage returns from docker exec
+    docker exec mimir-ollama ollama pull "$model" || {
+        warn "Failed to pull $model"
+        return 1
+    }
 }
 
 info "Waiting for Ollama..."
