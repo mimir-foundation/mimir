@@ -17,7 +17,7 @@ Mimir performs 4 distinct AI operations. Each operation can be routed to a diffe
 | Operation | What It Does | Example Routing |
 |-----------|-------------|-----------------|
 | **embed** | Generate vector embeddings for chunks | Ollama `nomic-embed-text` locally |
-| **extract** | Structured metadata extraction (JSON output) | Ollama `gemma3` locally |
+| **extract** | Structured metadata extraction (JSON output) | Ollama `gemma4` locally |
 | **reason** | Complex tasks: connection validation, synthesis, daily briefs, Q&A | Anthropic Claude API for quality |
 | **transcribe** | Audio → text | Local `faster-whisper` or OpenAI Whisper API |
 
@@ -88,7 +88,7 @@ class HarnessConfig:
 @dataclass
 class ProviderConfig:
     provider: str       # "ollama" | "openai" | "anthropic" | "google" | "local"
-    model: str          # "gemma3" | "claude-sonnet-4-20250514" | "gpt-4o" | etc.
+    model: str          # "gemma4" | "claude-sonnet-4-20250514" | "gpt-4o" | etc.
     base_url: str | None = None   # Override URL (for self-hosted / proxied APIs)
     api_key: str | None = None    # Required for cloud providers
     options: dict | None = None   # Provider-specific params (temperature overrides, etc.)
@@ -521,7 +521,7 @@ class LocalWhisperProvider:
     },
     "extract": {
       "provider": "ollama",
-      "model": "gemma3",
+      "model": "gemma4",
       "base_url": "http://ollama:11434"
     },
     "reason": {
@@ -545,8 +545,8 @@ These are one-click configurations users can choose from in the Settings UI:
 ```json
 {
   "embed":      { "provider": "ollama", "model": "nomic-embed-text" },
-  "extract":    { "provider": "ollama", "model": "gemma3" },
-  "reason":     { "provider": "ollama", "model": "gemma3" },
+  "extract":    { "provider": "ollama", "model": "gemma4" },
+  "reason":     { "provider": "ollama", "model": "gemma4" },
   "transcribe": { "provider": "local_whisper", "model": "base" }
 }
 ```
@@ -555,7 +555,7 @@ These are one-click configurations users can choose from in the Settings UI:
 ```json
 {
   "embed":      { "provider": "ollama", "model": "nomic-embed-text" },
-  "extract":    { "provider": "ollama", "model": "gemma3" },
+  "extract":    { "provider": "ollama", "model": "gemma4" },
   "reason":     { "provider": "anthropic", "model": "claude-sonnet-4-20250514" },
   "transcribe": { "provider": "local_whisper", "model": "base" }
 }
@@ -668,7 +668,7 @@ class ProcessingPipeline:
 
 This is a deliberate design decision:
 
-- **Extract** runs on every single note. It needs to be fast and cheap. Structured JSON output. A small local model (gemma3, phi3, llama3.2) handles this perfectly.
+- **Extract** runs on every single note. It needs to be fast and cheap. Structured JSON output. A small local model (gemma4, phi3, llama3.2) handles this perfectly.
 
 - **Reason** runs selectively — connection validation, synthesis, daily briefs, Q&A. These require nuance, creativity, and judgment. A more capable model (Claude, GPT-4o, or a larger local model) produces meaningfully better output here.
 
@@ -729,7 +729,7 @@ POST /api/harness/test
 │  ┌─────────────────────────────────────────────────────────┐│
 │  │  Extraction (metadata, tagging)                          ││
 │  │  Provider: [Ollama ▼]                                    ││
-│  │  Model:    [gemma3]                                      ││
+│  │  Model:    [gemma4]                                      ││
 │  │  URL:      [http://192.168.4.45:11434]                   ││
 │  │  Status:   ● Connected                                   ││
 │  └─────────────────────────────────────────────────────────┘│
@@ -782,7 +782,7 @@ Example: Reason with Claude, fall back to local Gemma if API is down:
     "api_key": "sk-ant-...",
     "fallback": {
       "provider": "ollama",
-      "model": "gemma3"
+      "model": "gemma4"
     }
   }
 }

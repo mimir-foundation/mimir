@@ -52,7 +52,7 @@
 | Component | Technology | Rationale |
 |-----------|-----------|-----------|
 | **Runtime** | Python 3.12+ (FastAPI) | Async-native, rich ML/NLP ecosystem |
-| **LLM Backend** | Ollama (gemma3 default, swappable) | Local, no API keys, model-agnostic |
+| **LLM Backend** | Ollama (gemma4 default, swappable) | Local, no API keys, model-agnostic |
 | **Vector Store** | ChromaDB | Embedded mode, no separate server needed, good Python integration |
 | **Graph/Relational DB** | SQLite + sqlite-vec | Zero-config, single-file, portable, surprisingly performant |
 | **Task Queue** | APScheduler (in-process) | No Redis/RabbitMQ dependency for v1 |
@@ -996,7 +996,7 @@ services:
       - DOCUMENTS_PATH=/data/documents
       - INBOX_PATH=/data/inbox
       - EMBEDDING_MODEL=nomic-embed-text
-      - LLM_MODEL=gemma3
+      - LLM_MODEL=gemma4
       - BRIEF_TIME=07:00
       - LOG_LEVEL=info
     volumes:
@@ -1043,7 +1043,7 @@ DATA_PATH=./data
 OLLAMA_MODELS_PATH=./ollama-models
 
 # Models
-LLM_MODEL=gemma3
+LLM_MODEL=gemma4
 EMBEDDING_MODEL=nomic-embed-text
 
 # Daily brief
@@ -1086,7 +1086,7 @@ API_KEY=                    # Set this to secure your capture API
     "spaced_rep_intervals_days": [1, 3, 7, 14, 30, 60, 90]
   },
   "processing": {
-    "llm_model": "gemma3",
+    "llm_model": "gemma4",
     "embedding_model": "nomic-embed-text",
     "chunk_target_tokens": 400,
     "chunk_overlap_tokens": 50,

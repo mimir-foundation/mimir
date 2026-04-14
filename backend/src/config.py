@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Ollama
     ollama_base_url: str = "http://ollama:11434"
-    llm_model: str = "gemma3"
+    llm_model: str = "gemma4"
     embedding_model: str = "nomic-embed-text"
 
     # Security

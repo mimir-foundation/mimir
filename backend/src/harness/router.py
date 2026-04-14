@@ -12,7 +12,7 @@ logger = logging.getLogger("mimir.harness")
 @dataclass
 class ProviderConfig:
     provider: str = "ollama"
-    model: str = "gemma3"
+    model: str = "gemma4"
     base_url: str = "http://ollama:11434"
     api_key: Optional[str] = None
     embed_model: Optional[str] = None
@@ -93,19 +93,19 @@ def _create_provider(config: ProviderConfig):
     if config.provider == "anthropic":
         if not config.api_key:
             logger.warning("Anthropic provider configured but no API key set, falling back to ollama")
-            return OllamaProvider(base_url=config.base_url or "http://ollama:11434", model="gemma3")
+            return OllamaProvider(base_url=config.base_url or "http://ollama:11434", model="gemma4")
         from src.harness.providers.anthropic import AnthropicProvider
         return AnthropicProvider(api_key=config.api_key, model=config.model)
     if config.provider == "openai":
         if not config.api_key:
             logger.warning("OpenAI provider configured but no API key set, falling back to ollama")
-            return OllamaProvider(base_url=config.base_url or "http://ollama:11434", model="gemma3")
+            return OllamaProvider(base_url=config.base_url or "http://ollama:11434", model="gemma4")
         from src.harness.providers.openai import OpenAIProvider
         return OpenAIProvider(api_key=config.api_key, model=config.model, embed_model=config.embed_model)
     logger.warning(f"Unknown provider '{config.provider}', falling back to ollama")
     return OllamaProvider(
         base_url=config.base_url or "http://ollama:11434",
-        model=config.model or "gemma3",
+        model=config.model or "gemma4",
     )
 
 

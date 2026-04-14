@@ -24,7 +24,7 @@ services:
       - DOCUMENTS_PATH=/data/documents
       - INBOX_PATH=/data/inbox
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
-      - LLM_MODEL=${LLM_MODEL:-gemma3}
+      - LLM_MODEL=${LLM_MODEL:-gemma4}
       - BRIEF_TIME=${BRIEF_TIME:-07:00}
       - API_KEY=${API_KEY:-}
       - HARNESS_PRESET=${HARNESS_PRESET:-local}

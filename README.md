@@ -61,7 +61,7 @@ Named after [Mímir](https://en.wikipedia.org/wiki/M%C3%ADmir), the Norse figure
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2+
-- 8 GB+ RAM (for Ollama with gemma3)
+- 8 GB+ RAM (for Ollama with gemma4)
 - (Optional) API key for Anthropic/OpenAI/Google if using cloud AI presets
 
 ### 1. Clone and configure
@@ -79,7 +79,7 @@ Edit `.env` with your preferences:
 HARNESS_PRESET=local          # local | hybrid | cloud | budget
 
 # Models
-LLM_MODEL=gemma3
+LLM_MODEL=gemma4
 EMBEDDING_MODEL=nomic-embed-text
 
 # Security (optional — leave blank to disable auth)
@@ -110,7 +110,7 @@ Navigate to [**localhost:3081**](http://localhost:3081) and start capturing.
 | Backend | [localhost:3080](http://localhost:3080) | FastAPI server |
 | Ollama | localhost:11435 | Local LLM inference |
 
-On first boot, Ollama pulls `gemma3` and `nomic-embed-text` (~5 GB). Subsequent starts are instant.
+On first boot, Ollama pulls `gemma4` and `nomic-embed-text` (~5 GB). Subsequent starts are instant.
 
 ### Guided setup (TUI)
 
@@ -148,7 +148,7 @@ mimir/
 |-------|-----------|
 | Backend | Python 3.12+, FastAPI, APScheduler |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS |
-| LLM | Ollama (gemma3 default, swappable) |
+| LLM | Ollama (gemma4 default, swappable) |
 | Embeddings | nomic-embed-text via Ollama (768-dim) |
 | Vector DB | ChromaDB (embedded mode) |
 | Relational DB | SQLite + FTS5 |

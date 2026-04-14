@@ -105,8 +105,8 @@ for i in $(seq 1 30); do
 done
 
 docker exec mimir-ollama ollama pull nomic-embed-text 2>&1 | tail -1
-docker exec mimir-ollama ollama pull gemma3 2>&1 | tail -1
-ok "Models ready: nomic-embed-text, gemma3"
+docker exec mimir-ollama ollama pull gemma4 2>&1 | tail -1
+ok "Models ready: nomic-embed-text, gemma4"
 
 # ── Install CLI ──────────────────────────────────────────────────────────────
 

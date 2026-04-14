@@ -251,7 +251,7 @@ DEFAULT_SETTINGS = {
         "spaced_rep_intervals_days": [1, 3, 7, 14, 30, 60, 90],
     },
     "processing": {
-        "llm_model": "gemma3",
+        "llm_model": "gemma4",
         "embedding_model": "nomic-embed-text",
         "chunk_target_tokens": 400,
         "chunk_overlap_tokens": 50,

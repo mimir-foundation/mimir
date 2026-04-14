@@ -46,7 +46,7 @@ class WizardState:
             f"DATA_PATH={self.data_path}",
             f"OLLAMA_MODELS_PATH=./ollama-models",
             f"",
-            f"LLM_MODEL=gemma3",
+            f"LLM_MODEL=gemma4",
             f"EMBEDDING_MODEL=nomic-embed-text",
             f"OLLAMA_BASE_URL={self.ollama_url}",
             f"",

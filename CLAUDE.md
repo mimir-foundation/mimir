@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |-------|-----------|
 | Backend | Python 3.12+, FastAPI |
 | Frontend | React, TypeScript, Vite |
-| LLM | Ollama (default model: gemma3) |
+| LLM | Ollama (default model: gemma4) |
 | Embeddings | nomic-embed-text via Ollama (768-dim) |
 | Vector DB | ChromaDB (embedded mode) |
 | Relational DB | SQLite + sqlite-vec |

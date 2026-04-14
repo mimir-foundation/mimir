@@ -2,9 +2,18 @@
 
 from textual.app import ComposeResult
 from textual.containers import Vertical
-from textual.widgets import Input, Button, Label, RichLog, Static, Checkbox
+from textual.widgets import Input, Button, Label, RichLog, Static, Checkbox, Select
 
 import httpx
+
+
+GEMMA4_MODELS = [
+    ("gemma4 (default, balanced)", "gemma4"),
+    ("gemma4:27b (largest, best quality)", "gemma4:27b"),
+    ("gemma4:12b (mid-range)", "gemma4:12b"),
+    ("gemma4:4b (lightweight, fast)", "gemma4:4b"),
+    ("gemma4:1b (phone/edge, fastest)", "gemma4:1b"),
+]
 
 
 class OllamaStep(Vertical):
@@ -16,7 +25,9 @@ class OllamaStep(Vertical):
         yield Button("Test Connection", id="btn-test-ollama", variant="primary")
         yield Static("", id="ollama-status")
         yield Static("")
-        yield Checkbox("Pull gemma3 (LLM model)", True, id="pull-gemma3")
+        yield Label("Gemma 4 model variant")
+        yield Select(GEMMA4_MODELS, value="gemma4", id="gemma4-select")
+        yield Checkbox("Pull selected Gemma 4 model", True, id="pull-gemma4")
         yield Checkbox("Pull nomic-embed-text (embedding model)", True, id="pull-nomic")
         yield Button("Pull Selected Models", id="btn-pull-models")
         yield RichLog(id="ollama-log", markup=True, max_lines=50)
@@ -64,8 +75,10 @@ class OllamaStep(Vertical):
         log.clear()
 
         models_to_pull = []
-        if self.query_one("#pull-gemma3", Checkbox).value:
-            models_to_pull.append("gemma3")
+        if self.query_one("#pull-gemma4", Checkbox).value:
+            selected = self.query_one("#gemma4-select", Select).value
+            if selected and selected != Select.BLANK:
+                models_to_pull.append(str(selected))
         if self.query_one("#pull-nomic", Checkbox).value:
             models_to_pull.append("nomic-embed-text")
 
